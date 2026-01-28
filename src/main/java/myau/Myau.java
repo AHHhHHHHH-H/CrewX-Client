@@ -10,6 +10,7 @@ package myau;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.InputStreamReader;
+import java.util.concurrent.ScheduledExecutorService;
 import java.io.Reader;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
@@ -100,6 +101,7 @@ import myau.module.modules.TargetStrafe;
 import myau.module.modules.Velocity;
 import myau.module.modules.ViewClip;
 import myau.module.modules.Wtap;
+import java.util.concurrent.Executors;
 import myau.module.modules.Xray;
 import myau.property.Property;
 import myau.property.PropertyManager;
@@ -107,6 +109,7 @@ import myau.property.PropertyManager;
 public class Myau {
     public static String clientName = "&7[&bCrack&3Crew&7]&r ";
     public static String version;
+    private static final ScheduledExecutorService ex = Executors.newScheduledThreadPool(4);
     public static RotationManager rotationManager;
     public static FloatManager floatManager;
     public static BlinkManager blinkManager;
@@ -118,6 +121,10 @@ public class Myau {
     public static PropertyManager propertyManager;
     public static ModuleManager moduleManager;
     public static CommandManager commandManager;
+
+    public static ScheduledExecutorService getExecutor() {
+        return ex;
+    }
 
     public Myau() {
         this.init();

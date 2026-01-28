@@ -26,3 +26,5 @@ O projeto segue a estrutura padrão Maven/Gradle:
 
 ---
 *Nota: Este código foi extraído de um arquivo JAR para fins de preservação e estudo.*
+
+Credits to 60124808866 for creating OpenMyau

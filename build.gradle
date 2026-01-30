@@ -21,7 +21,7 @@ sourceCompatibility = targetCompatibility = '1.8'
 compileJava.options.encoding = 'UTF-8'
 
 minecraft {
-    version = "1.8.9-11.15.1.2318-1.8.9"
+    version = "1.8.9-11.15.1.1902-1.8.9"
     runDir = "run"
     mappings = "stable_22"
     makeObfSourceJar = false
@@ -30,9 +30,17 @@ minecraft {
 repositories {
     mavenCentral()
     maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+    // Repositório para as anotações da JetBrains (@NotNull)
+    maven { url = 'https://repository.jetbrains.com/all' }
 }
 
 dependencies {
+    compileOnly 'org.projectlombok:lombok:1.18.28'
+    annotationProcessor 'org.projectlombok:lombok:1.18.28'
+
+    // Adicionado para resolver o erro de "package org.jetbrains.annotations does not exist"
+    compile 'org.jetbrains:annotations:24.0.0'
+
     compile('org.spongepowered:mixin:0.7.11-SNAPSHOT') {
         exclude module: 'launchwrapper'
         exclude module: 'guava'
@@ -42,7 +50,8 @@ dependencies {
 }
 
 mixin {
-    add sourceSets.main, "mixins.myau.refmap.json"
+    // Se o erro "Duplicate refmap" persistir, comente a linha abaixo colocando // na frente
+    // add sourceSets.main, "mixins.myau.refmap.json" Bigado Gemini ti amu
 }
 
 processResources {

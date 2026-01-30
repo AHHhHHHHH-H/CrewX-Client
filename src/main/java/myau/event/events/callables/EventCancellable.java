@@ -1,27 +1,33 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.event.events.callables;
 
 import myau.event.events.Cancellable;
 import myau.event.events.Event;
 
-public abstract class EventCancellable
-implements Event,
-Cancellable {
+/**
+ * Abstract example implementation of the Cancellable interface.
+ *
+ * @author DarkMagician6
+ * @since August 27, 2013
+ */
+public abstract class EventCancellable implements Event, Cancellable {
     private boolean cancelled;
 
     protected EventCancellable() {
     }
 
+    /**
+     * @see Cancellable.isCancelled
+     */
     @Override
     public boolean isCancelled() {
-        return this.cancelled;
+        return cancelled;
     }
 
+    /**
+     * @see Cancellable.setCancelled
+     */
     @Override
     public void setCancelled(boolean state) {
-        this.cancelled = state;
+        cancelled = state;
     }
 }
-

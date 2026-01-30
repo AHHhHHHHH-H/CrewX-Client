@@ -1,12 +1,8 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.events;
 
 import myau.event.events.Event;
 
-public class StrafeEvent
-implements Event {
+public class StrafeEvent implements Event {
     private float strafe;
     private float forward;
     private float friction;
@@ -41,4 +37,3 @@ implements Event {
         this.friction = float1;
     }
 }
-

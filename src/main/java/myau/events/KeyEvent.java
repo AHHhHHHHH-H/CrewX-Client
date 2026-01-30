@@ -1,12 +1,8 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.events;
 
 import myau.event.events.Event;
 
-public class KeyEvent
-implements Event {
+public class KeyEvent implements Event {
     private final int keyCode;
 
     public KeyEvent(int key) {
@@ -17,4 +13,3 @@ implements Event {
         return this.keyCode;
     }
 }
-

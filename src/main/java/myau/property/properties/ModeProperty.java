@@ -1,17 +1,11 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.gson.JsonObject
- */
 package myau.property.properties;
 
 import com.google.gson.JsonObject;
-import java.util.function.BooleanSupplier;
 import myau.property.Property;
 
-public class ModeProperty
-extends Property<Integer> {
+import java.util.function.BooleanSupplier;
+
+public class ModeProperty extends Property<Integer> {
     private final String[] modes;
 
     public ModeProperty(String name, Integer value, String[] modes) {
@@ -25,11 +19,11 @@ extends Property<Integer> {
 
     @Override
     public String getValuePrompt() {
-        return String.join((CharSequence)", ", this.modes);
+        return String.join(", ", this.modes);
     }
 
     public String getModeString() {
-        int index = (Integer)this.getValue();
+        int index = this.getValue();
         return index >= 0 && index < this.modes.length ? this.modes[index] : "";
     }
 
@@ -42,9 +36,10 @@ extends Property<Integer> {
     @Override
     public boolean parseString(String string) {
         String valueStr = string.replace("_", "");
-        for (int i = 0; i < this.modes.length; ++i) {
-            if (!valueStr.equalsIgnoreCase(this.modes[i].replace("_", ""))) continue;
-            return this.setValue(i);
+        for (int i = 0; i < this.modes.length; i++) {
+            if (valueStr.equalsIgnoreCase(this.modes[i].replace("_", ""))) {
+                return this.setValue(i);
+            }
         }
         return false;
     }
@@ -60,7 +55,7 @@ extends Property<Integer> {
     }
 
     public void nextMode() {
-        int current = (Integer)this.getValue();
+        int current = this.getValue();
         int next = current + 1;
         if (next >= this.modes.length) {
             next = 0;
@@ -69,7 +64,7 @@ extends Property<Integer> {
     }
 
     public void previousMode() {
-        int current = (Integer)this.getValue();
+        int current = this.getValue();
         int prev = current - 1;
         if (prev < 0) {
             prev = this.modes.length - 1;
@@ -77,4 +72,3 @@ extends Property<Integer> {
         this.setValue(prev);
     }
 }
-

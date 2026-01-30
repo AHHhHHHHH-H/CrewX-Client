@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.module;
 
 import myau.Myau;
@@ -23,8 +20,7 @@ public abstract class Module {
     public Module(String name, boolean enabled, boolean hidden) {
         this.name = name;
         this.enabled = this.defaultEnabled = enabled;
-        this.defaultKey = 0;
-        this.key = 0;
+        this.key = this.defaultKey = 0;
         this.hidden = this.defaultHidden = hidden;
     }
 
@@ -33,7 +29,12 @@ public abstract class Module {
     }
 
     public String formatModule() {
-        return String.format("%s%s &r(%s&r)", this.key == 0 ? "" : String.format("&l[%s] &r", KeyBindUtil.getKeyName(this.key)), this.name, this.enabled ? "&a&lON" : "&c&lOFF");
+        return String.format(
+                "%s%s &r(%s&r)",
+                this.key == 0 ? "" : String.format("&l[%s] &r", KeyBindUtil.getKeyName(this.key)),
+                this.name,
+                this.enabled ? "&a&lON" : "&c&lOFF"
+        );
     }
 
     public String[] getSuffix() {
@@ -59,12 +60,13 @@ public abstract class Module {
         boolean enabled = !this.enabled;
         this.setEnabled(enabled);
         if (this.enabled == enabled) {
-            if (((Boolean)((HUD)Myau.moduleManager.modules.get(HUD.class)).toggleSound.getValue()).booleanValue()) {
+            if (((HUD) Myau.moduleManager.modules.get(HUD.class)).toggleSound.getValue()) {
                 Myau.moduleManager.playSound();
             }
             return true;
+        } else {
+            return false;
         }
-        return false;
     }
 
     public int getKey() {
@@ -92,4 +94,3 @@ public abstract class Module {
     public void verifyValue(String string) {
     }
 }
-

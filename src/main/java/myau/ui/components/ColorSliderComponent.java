@@ -1,125 +1,109 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.Minecraft
- *  net.minecraft.client.gui.Gui
- *  net.minecraft.client.renderer.Tessellator
- *  net.minecraft.client.renderer.WorldRenderer
- *  net.minecraft.client.renderer.vertex.DefaultVertexFormats
- *  org.lwjgl.opengl.GL11
- */
 package myau.ui.components;
 
-import java.awt.Color;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.concurrent.atomic.AtomicInteger;
 import myau.enums.ChatColors;
 import myau.property.properties.ColorProperty;
 import myau.ui.Component;
-import myau.ui.components.ModuleComponent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldRenderer;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import org.lwjgl.opengl.GL11;
 
-public class ColorSliderComponent
-implements Component {
+import java.awt.*;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+public class ColorSliderComponent implements Component {
+
     private final ModuleComponent parentModule;
     private final ColorProperty property;
     private int offsetY;
-    private boolean draggingHue;
-    private boolean draggingSat;
-    private boolean draggingBri;
-    private float hue;
-    private float saturation;
-    private float brightness;
+    private boolean draggingHue, draggingSat, draggingBri;
+    private float hue, saturation, brightness;
 
     public ColorSliderComponent(ColorProperty property, ModuleComponent parentModule, int offsetY) {
         this.parentModule = parentModule;
         this.offsetY = offsetY;
         this.property = property;
-        Color c = new Color((Integer)property.getValue());
+
+        Color c = new Color(property.getValue());
         float[] hsb = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
-        this.hue = hsb[0];
-        this.saturation = hsb[1];
-        this.brightness = hsb[2];
+        hue = hsb[0];
+        saturation = hsb[1];
+        brightness = hsb[2];
     }
 
     @Override
-    public void draw(AtomicInteger offset) {
-        int x = this.parentModule.category.getX() + 4;
-        int y = this.parentModule.category.getY() + this.offsetY;
-        int width = this.parentModule.category.getWidth() - 8;
+    public void draw(java.util.concurrent.atomic.AtomicInteger offset) {
+        int x = parentModule.category.getX() + 4;
+        int y = parentModule.category.getY() + offsetY;
+        int width = parentModule.category.getWidth() - 8;
         GL11.glPushMatrix();
-        GL11.glScaled((double)0.5, (double)0.5, (double)0.5);
-        Minecraft.func_71410_x().field_71466_p.func_175063_a(this.property.getName().replace("-", " ") + ": " + ChatColors.formatColor(this.property.formatValue()), (float)(x * 2), (float)((int)((float)(this.parentModule.category.getY() + this.offsetY + 3) * 2.0f)), -1);
+        GL11.glScaled(0.5, 0.5, 0.5);
+        Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(property.getName().replace("-", " ") + ": " + ChatColors.formatColor(property.formatValue()), (float) (x * 2), (float) ((int) ((float) (this.parentModule.category.getY() + this.offsetY + 3) * 2.0F)), -1);
         GL11.glPopMatrix();
-        if (!(this.draggingHue || this.draggingSat || this.draggingBri)) {
-            Color color = new Color((Integer)this.property.getValue());
+        if (!draggingHue && !draggingSat && !draggingBri) {
+            Color color = new Color(property.getValue());
             float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
-            this.hue = hsb[0];
-            this.saturation = hsb[1];
-            this.brightness = hsb[2];
+            hue = hsb[0];
+            saturation = hsb[1];
+            brightness = hsb[2];
         }
         int colorPreviewSize = 6;
         int colorPreviewX = x + width - colorPreviewSize;
         int colorPreviewY = y + 2;
-        int previewColor = Color.HSBtoRGB(this.hue, this.saturation, this.brightness);
-        Gui.func_73734_a((int)(colorPreviewX - 6), (int)colorPreviewY, (int)(colorPreviewX + colorPreviewSize), (int)(colorPreviewY + colorPreviewSize), (int)previewColor);
+        int previewColor = Color.HSBtoRGB(hue, saturation, brightness);
+        Gui.drawRect(colorPreviewX - 6, colorPreviewY, colorPreviewX + colorPreviewSize, colorPreviewY + colorPreviewSize, previewColor);
         int baseY = y + 10;
         int satY = baseY + 4 + 2;
         int briY = satY + 4 + 2;
-        this.drawHueBar(x, baseY, width);
-        this.drawPointer(x, baseY, width, this.hue);
-        this.drawGradientRect(x, satY, x + width, satY + 4, Color.WHITE.getRGB(), Color.getHSBColor(this.hue, 1.0f, 1.0f).getRGB());
-        this.drawPointer(x, satY, width, this.saturation);
-        this.drawGradientRect(x, briY, x + width, briY + 4, Color.BLACK.getRGB(), Color.getHSBColor(this.hue, this.saturation, 1.0f).getRGB());
-        this.drawPointer(x, briY, width, this.brightness);
+        drawHueBar(x, baseY, width);
+        drawPointer(x, baseY, width, hue);
+        drawGradientRect(x, satY, x + width, satY + 4, Color.WHITE.getRGB(), Color.getHSBColor(hue, 1f, 1f).getRGB());
+        drawPointer(x, satY, width, saturation);
+        drawGradientRect(x, briY, x + width, briY + 4, Color.BLACK.getRGB(), Color.getHSBColor(hue, saturation, 1f).getRGB());
+        drawPointer(x, briY, width, brightness);
     }
 
     private void drawHueBar(int x, int y, int width) {
-        for (int i = 0; i < width; ++i) {
-            float hue = (float)i / (float)width;
-            int color = Color.HSBtoRGB(hue, 1.0f, 1.0f);
-            Gui.func_73734_a((int)(x + i), (int)y, (int)(x + i + 1), (int)(y + 4), (int)color);
+        for (int i = 0; i < width; i++) {
+            float hue = (float) i / (float) width;
+            int color = Color.HSBtoRGB(hue, 1f, 1f);
+            Gui.drawRect(x + i, y, x + i + 1, y + 4, color);
         }
     }
 
     private void drawPointer(int x, int y, int width, float value) {
-        int posX = x + (int)((float)width * value);
-        Gui.func_73734_a((int)(posX - 1), (int)y, (int)posX, (int)(y + 4), (int)new Color(0, 0, 0, 200).getRGB());
+        int posX = x + (int) (width * value);
+        Gui.drawRect(posX - 1, y, posX, y + 4, new Color(0, 0, 0, 200).getRGB());
     }
 
     @Override
     public void update(int mouseX, int mouseY) {
-        int baseX = this.parentModule.category.getX() + 4;
-        int width = this.parentModule.category.getWidth() - 8;
+        int baseX = parentModule.category.getX() + 4;
+        int width = parentModule.category.getWidth() - 8;
         boolean changed = false;
-        if (this.draggingHue) {
-            this.hue = this.getSliderValue(mouseX, baseX, width);
+
+        if (draggingHue) {
+            hue = getSliderValue(mouseX, baseX, width);
             changed = true;
         }
-        if (this.draggingSat) {
-            this.saturation = this.getSliderValue(mouseX, baseX, width);
+        if (draggingSat) {
+            saturation = getSliderValue(mouseX, baseX, width);
             changed = true;
         }
-        if (this.draggingBri) {
-            this.brightness = this.getSliderValue(mouseX, baseX, width);
+        if (draggingBri) {
+            brightness = getSliderValue(mouseX, baseX, width);
             changed = true;
         }
+
         if (changed) {
-            int signed = Color.HSBtoRGB(this.hue, this.saturation, this.brightness);
-            this.property.setValue(new Color(signed).getRGB());
+            int signed = Color.HSBtoRGB(hue, saturation, brightness);
+            property.setValue(new Color(signed).getRGB());
         }
     }
 
     private float getSliderValue(int mouseX, int startX, int width) {
         double d = Math.min(width, Math.max(0, mouseX - startX));
-        return (float)ColorSliderComponent.roundToPrecision(d / (double)width, 3);
+        return (float) roundToPrecision(d / width, 3);
     }
 
     private static double roundToPrecision(double v, int precision) {
@@ -130,35 +114,27 @@ implements Component {
 
     @Override
     public void mouseDown(int mouseX, int mouseY, int button) {
-        if (button != 0 || !this.parentModule.panelExpand) {
-            return;
-        }
-        int baseY = this.parentModule.category.getY() + this.offsetY + 10;
-        if (this.isHovered(mouseX, mouseY, baseY)) {
-            this.draggingHue = true;
-        } else if (this.isHovered(mouseX, mouseY, baseY + 4 + 2)) {
-            this.draggingSat = true;
-        } else if (this.isHovered(mouseX, mouseY, baseY + 12)) {
-            this.draggingBri = true;
-        }
+        if (button != 0 || !parentModule.panelExpand) return;
+        int baseY = parentModule.category.getY() + offsetY + 10;
+        if (isHovered(mouseX, mouseY, baseY)) draggingHue = true;
+        else if (isHovered(mouseX, mouseY, baseY + 4 + 2)) draggingSat = true;
+        else if (isHovered(mouseX, mouseY, baseY + (4 + 2) * 2)) draggingBri = true;
     }
 
     @Override
     public void mouseReleased(int x, int y, int button) {
-        this.draggingBri = false;
-        this.draggingSat = false;
-        this.draggingHue = false;
+        draggingHue = draggingSat = draggingBri = false;
     }
 
     private boolean isHovered(int mx, int my, int sliderY) {
-        int startX = this.parentModule.category.getX() + 4;
-        int endX = startX + this.parentModule.category.getWidth() - 8;
+        int startX = parentModule.category.getX() + 4;
+        int endX = startX + parentModule.category.getWidth() - 8;
         return mx >= startX && mx <= endX && my >= sliderY && my <= sliderY + 4;
     }
 
     @Override
     public boolean isVisible() {
-        return this.property.isVisible();
+        return property.isVisible();
     }
 
     @Override
@@ -167,40 +143,40 @@ implements Component {
 
     @Override
     public void setComponentStartAt(int newOffsetY) {
-        this.offsetY = newOffsetY;
+        offsetY = newOffsetY;
     }
 
     @Override
     public int getHeight() {
-        return 27;
+        return 10 + 17;
     }
 
     private void drawGradientRect(int left, int top, int right, int bottom, int startColor, int endColor) {
-        float sa = (float)(startColor >> 24 & 0xFF) / 255.0f;
-        float sr = (float)(startColor >> 16 & 0xFF) / 255.0f;
-        float sg = (float)(startColor >> 8 & 0xFF) / 255.0f;
-        float sb = (float)(startColor & 0xFF) / 255.0f;
-        float ea = (float)(endColor >> 24 & 0xFF) / 255.0f;
-        float er = (float)(endColor >> 16 & 0xFF) / 255.0f;
-        float eg = (float)(endColor >> 8 & 0xFF) / 255.0f;
-        float eb = (float)(endColor & 0xFF) / 255.0f;
-        Tessellator tessellator = Tessellator.func_178181_a();
-        WorldRenderer world = tessellator.func_178180_c();
-        GL11.glDisable((int)3553);
-        GL11.glEnable((int)3042);
-        GL11.glDisable((int)3008);
-        GL11.glBlendFunc((int)770, (int)771);
-        GL11.glShadeModel((int)7425);
-        world.func_181668_a(7, DefaultVertexFormats.field_181706_f);
-        world.func_181662_b((double)right, (double)top, 0.0).func_181666_a(er, eg, eb, ea).func_181675_d();
-        world.func_181662_b((double)left, (double)top, 0.0).func_181666_a(sr, sg, sb, sa).func_181675_d();
-        world.func_181662_b((double)left, (double)bottom, 0.0).func_181666_a(sr, sg, sb, sa).func_181675_d();
-        world.func_181662_b((double)right, (double)bottom, 0.0).func_181666_a(er, eg, eb, ea).func_181675_d();
-        tessellator.func_78381_a();
-        GL11.glShadeModel((int)7424);
-        GL11.glDisable((int)3042);
-        GL11.glEnable((int)3008);
-        GL11.glEnable((int)3553);
+        float sa = (float) (startColor >> 24 & 255) / 255.0F;
+        float sr = (float) (startColor >> 16 & 255) / 255.0F;
+        float sg = (float) (startColor >> 8 & 255) / 255.0F;
+        float sb = (float) (startColor & 255) / 255.0F;
+        float ea = (float) (endColor >> 24 & 255) / 255.0F;
+        float er = (float) (endColor >> 16 & 255) / 255.0F;
+        float eg = (float) (endColor >> 8 & 255) / 255.0F;
+        float eb = (float) (endColor & 255) / 255.0F;
+        net.minecraft.client.renderer.Tessellator tessellator = net.minecraft.client.renderer.Tessellator.getInstance();
+        net.minecraft.client.renderer.WorldRenderer world = tessellator.getWorldRenderer();
+        org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_TEXTURE_2D);
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_BLEND);
+        org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_ALPHA_TEST);
+        org.lwjgl.opengl.GL11.glBlendFunc(org.lwjgl.opengl.GL11.GL_SRC_ALPHA, org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA);
+        org.lwjgl.opengl.GL11.glShadeModel(org.lwjgl.opengl.GL11.GL_SMOOTH);
+        world.begin(7, net.minecraft.client.renderer.vertex.DefaultVertexFormats.POSITION_COLOR);
+        world.pos(right, top, 0).color(er, eg, eb, ea).endVertex();
+        world.pos(left, top, 0).color(sr, sg, sb, sa).endVertex();
+        world.pos(left, bottom, 0).color(sr, sg, sb, sa).endVertex();
+        world.pos(right, bottom, 0).color(er, eg, eb, ea).endVertex();
+        tessellator.draw();
+        org.lwjgl.opengl.GL11.glShadeModel(org.lwjgl.opengl.GL11.GL_FLAT);
+        org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_BLEND);
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_ALPHA_TEST);
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_TEXTURE_2D);
     }
-}
 
+}

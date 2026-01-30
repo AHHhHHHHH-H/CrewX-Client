@@ -1,26 +1,17 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.Minecraft
- *  net.minecraft.entity.ai.attributes.AttributeModifier
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- */
 package myau.module.modules;
 
 import myau.event.EventTarget;
 import myau.events.TickEvent;
 import myau.mixin.IAccessorEntityLivingBase;
 import myau.module.Module;
-import myau.property.properties.BooleanProperty;
 import myau.util.KeyBindUtil;
+import myau.property.properties.BooleanProperty;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 
-public class Sprint
-extends Module {
-    private static final Minecraft mc = Minecraft.func_71410_x();
+public class Sprint extends Module {
+    private static final Minecraft mc = Minecraft.getMinecraft();
     private boolean wasSprinting = false;
     public final BooleanProperty foxFix = new BooleanProperty("fov-fix", true);
 
@@ -29,28 +20,27 @@ extends Module {
     }
 
     public boolean shouldApplyFovFix(IAttributeInstance attribute) {
-        if (!((Boolean)this.foxFix.getValue()).booleanValue()) {
+        if (!this.foxFix.getValue()) {
             return false;
+        } else {
+            AttributeModifier attributeModifier = ((IAccessorEntityLivingBase) mc.thePlayer).getSprintingSpeedBoostModifier();
+            return attribute.getModifier(attributeModifier.getID()) == null && this.wasSprinting;
         }
-        AttributeModifier attributeModifier = ((IAccessorEntityLivingBase)Sprint.mc.field_71439_g).getSprintingSpeedBoostModifier();
-        return attribute.func_111127_a(attributeModifier.func_111167_a()) == null && this.wasSprinting;
     }
 
     public boolean shouldKeepFov(boolean boolean2) {
-        return (Boolean)this.foxFix.getValue() != false && !boolean2 && this.wasSprinting;
+        return this.foxFix.getValue() && !boolean2 && this.wasSprinting;
     }
 
     @EventTarget
     public void onTick(TickEvent event) {
         if (this.isEnabled()) {
             switch (event.getType()) {
-                case PRE: {
-                    KeyBindUtil.setKeyBindState(Sprint.mc.field_71474_y.field_151444_V.func_151463_i(), true);
+                case PRE:
+                    KeyBindUtil.setKeyBindState(mc.gameSettings.keyBindSprint.getKeyCode(), true);
                     break;
-                }
-                case POST: {
-                    this.wasSprinting = Sprint.mc.field_71439_g.func_70051_ag();
-                }
+                case POST:
+                    this.wasSprinting = mc.thePlayer.isSprinting();
             }
         }
     }
@@ -58,7 +48,6 @@ extends Module {
     @Override
     public void onDisabled() {
         this.wasSprinting = false;
-        KeyBindUtil.updateKeyState(Sprint.mc.field_71474_y.field_151444_V.func_151463_i());
+        KeyBindUtil.updateKeyState(mc.gameSettings.keyBindSprint.getKeyCode());
     }
 }
-

@@ -1,26 +1,25 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.command.commands;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Locale;
 import myau.Myau;
 import myau.command.Command;
 import myau.module.Module;
 import myau.util.ChatUtil;
 
-public class ShowCommand
-extends Command {
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Locale;
+
+public class ShowCommand extends Command {
     public ShowCommand() {
-        super(new ArrayList<String>(Arrays.asList("show", "s", "unhide")));
+        super(new ArrayList<>(Arrays.asList("show", "s", "unhide")));
     }
 
     @Override
     public void runCommand(ArrayList<String> args) {
         if (args.size() < 2) {
-            ChatUtil.sendFormatted(String.format("%sUsage: .%s <&omodule&r>&r", Myau.clientName, args.get(0).toLowerCase(Locale.ROOT)));
+            ChatUtil.sendFormatted(
+                    String.format("%sUsage: .%s <&omodule&r>&r", Myau.clientName, args.get(0).toLowerCase(Locale.ROOT))
+            );
         } else if (!args.get(1).equals("*")) {
             Module module = Myau.moduleManager.getModule(args.get(1));
             if (module == null) {
@@ -39,4 +38,3 @@ extends Command {
         }
     }
 }
-

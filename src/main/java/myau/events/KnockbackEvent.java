@@ -1,12 +1,8 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.events;
 
 import myau.event.events.callables.EventCancellable;
 
-public class KnockbackEvent
-extends EventCancellable {
+public class KnockbackEvent extends EventCancellable {
     private double x;
     private double y;
     private double z;
@@ -44,4 +40,3 @@ extends EventCancellable {
         this.setCancelled(true);
     }
 }
-

@@ -1,25 +1,19 @@
-/*
- * Decompiled with CFR 0.152.
- *
- * Could not load the following classes:
- *  net.minecraft.client.Minecraft
- *  org.lwjgl.opengl.GL11
- */
 package myau.ui.components;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import myau.Myau;
 import myau.module.modules.GuiModule;
 import myau.module.modules.HUD;
 import myau.ui.Component;
-import myau.ui.components.ModuleComponent;
 import myau.ui.dataset.BindStage;
 import myau.util.KeyBindUtil;
 import net.minecraft.client.Minecraft;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
-public class BindComponent
-        implements Component {
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class BindComponent implements Component {
     private boolean isBinding;
     private final ModuleComponent parentModule;
     private int offsetY;
@@ -33,12 +27,11 @@ public class BindComponent
         this.offsetY = offsetY;
     }
 
-    @Override
     public void draw(AtomicInteger offset) {
         GL11.glPushMatrix();
-        GL11.glScaled((double)0.5, (double)0.5, (double)0.5);
+        GL11.glScaled(0.5D, 0.5D, 0.5D);
         String displayText = this.isBinding ? BindStage.binding : BindStage.bind + ": " + KeyBindUtil.getKeyName(this.parentModule.mod.getKey());
-        this.renderText(displayText, ((HUD)Myau.moduleManager.modules.get(HUD.class)).getColor(System.currentTimeMillis(), offset.get()).getRGB());
+        this.renderText(displayText, ((HUD) Myau.moduleManager.modules.get(HUD.class)).getColor(System.currentTimeMillis(), offset.get()).getRGB());
         GL11.glPopMatrix();
     }
 
@@ -49,16 +42,17 @@ public class BindComponent
         this.x = this.parentModule.category.getX();
     }
 
-    @Override
     public void mouseDown(int x, int y, int button) {
         if (this.isHovered(x, y) && button == 0 && this.parentModule.panelExpand) {
             this.isBinding = !this.isBinding;
         } else if (this.isBinding && this.parentModule.panelExpand) {
             int keyIndex = button - 100;
+            
             if (button == 0) {
                 this.isBinding = false;
                 return;
             }
+            
             this.parentModule.mod.setKey(keyIndex);
             this.isBinding = false;
         }
@@ -66,6 +60,7 @@ public class BindComponent
 
     @Override
     public void mouseReleased(int x, int y, int button) {
+
     }
 
     @Override
@@ -75,7 +70,8 @@ public class BindComponent
                 this.isBinding = false;
                 return;
             }
-            if (keyCode == 11) {
+            
+            if (keyCode == 11) { 
                 if (this.parentModule.mod instanceof GuiModule) {
                     this.parentModule.mod.setKey(54);
                 } else {
@@ -84,6 +80,7 @@ public class BindComponent
             } else {
                 this.parentModule.mod.setKey(keyCode);
             }
+
             this.isBinding = false;
         }
     }
@@ -97,7 +94,6 @@ public class BindComponent
         return x > this.x && x < this.x + this.parentModule.category.getWidth() && y > this.y - 1 && y < this.y + 12;
     }
 
-    @Override
     public int getHeight() {
         return 12;
     }
@@ -108,7 +104,6 @@ public class BindComponent
     }
 
     private void renderText(String s, int color) {
-        Minecraft.func_71410_x().field_71466_p.func_175063_a(s, (float)((this.parentModule.category.getX() + 4) * 2), (float)((this.parentModule.category.getY() + this.offsetY + 3) * 2), color);
+        Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(s, (float) ((this.parentModule.category.getX() + 4) * 2), (float) ((this.parentModule.category.getY() + this.offsetY + 3) * 2), color);
     }
 }
-

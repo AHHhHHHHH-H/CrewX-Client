@@ -1,12 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.entity.EntityPlayerSP
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- */
 package myau.mixin;
 
 import myau.Myau;
@@ -21,19 +12,27 @@ import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@SideOnly(value=Side.CLIENT)
+@SideOnly(Side.CLIENT)
 @Pseudo
-@Mixin(targets={"club.sk1er.patcher.util.fov.FovHandler"}, priority=9999)
+@Mixin(targets = {"club.sk1er.patcher.util.fov.FovHandler"}, priority = 9999)
 public abstract class MixinFovHandler {
-    @Redirect(method={"fovChange"}, remap=false, at=@At(value="INVOKE", target="Lnet/minecraft/entity/player/EntityPlayer;func_70051_ag()Z", remap=false))
-    @Dynamic(value="Patcher")
+    @Redirect(
+            method = {"fovChange"},
+            remap = false,
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/entity/player/EntityPlayer;func_70051_ag()Z",
+                    remap = false
+            )
+    )
+    @Dynamic("Patcher")
     private boolean fovChange(EntityPlayer entityPlayer) {
-        boolean sprinting = entityPlayer.func_70051_ag();
+        boolean sprinting = entityPlayer.isSprinting();
         if (entityPlayer instanceof EntityPlayerSP && Myau.moduleManager != null) {
-            Sprint sprint = (Sprint)Myau.moduleManager.modules.get(Sprint.class);
+            Sprint sprint = (Sprint) Myau.moduleManager.modules.get(Sprint.class);
             return sprint.isEnabled() && sprint.shouldKeepFov(sprinting) || sprinting;
+        } else {
+            return sprinting;
         }
-        return sprinting;
     }
 }
-

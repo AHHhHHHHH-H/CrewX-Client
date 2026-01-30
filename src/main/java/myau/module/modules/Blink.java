@@ -1,20 +1,17 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.module.modules;
 
 import myau.Myau;
 import myau.enums.BlinkModules;
 import myau.event.EventTarget;
 import myau.event.types.EventType;
+import myau.event.types.Priority;
 import myau.events.LoadWorldEvent;
 import myau.events.TickEvent;
 import myau.module.Module;
 import myau.property.properties.IntProperty;
 import myau.property.properties.ModeProperty;
 
-public class Blink
-extends Module {
+public class Blink extends Module {
     public final ModeProperty mode = new ModeProperty("mode", 0, new String[]{"DEFAULT", "PULSE"});
     public final IntProperty ticks = new IntProperty("ticks", 20, 0, 1200);
 
@@ -22,20 +19,20 @@ extends Module {
         super("Blink", false);
     }
 
-    @EventTarget(value=4)
+    @EventTarget(Priority.LOWEST)
     public void onTick(TickEvent event) {
         if (this.isEnabled() && event.getType() == EventType.POST) {
-            if (!Myau.blinkManager.getBlinkingModule().equals((Object)BlinkModules.BLINK)) {
+            if (!Myau.blinkManager.getBlinkingModule().equals(BlinkModules.BLINK)) {
                 this.setEnabled(false);
-            } else if ((Integer)this.ticks.getValue() > 0 && Myau.blinkManager.countMovement() > (long)((Integer)this.ticks.getValue()).intValue()) {
-                switch ((Integer)this.mode.getValue()) {
-                    case 0: {
-                        this.setEnabled(false);
-                        break;
-                    }
-                    case 1: {
-                        Myau.blinkManager.setBlinkState(false, BlinkModules.BLINK);
-                        Myau.blinkManager.setBlinkState(true, BlinkModules.BLINK);
+            } else {
+                if (this.ticks.getValue() > 0 && Myau.blinkManager.countMovement() > (long) this.ticks.getValue()) {
+                    switch (this.mode.getValue()) {
+                        case 0:
+                            this.setEnabled(false);
+                            break;
+                        case 1:
+                            Myau.blinkManager.setBlinkState(false, BlinkModules.BLINK);
+                            Myau.blinkManager.setBlinkState(true, BlinkModules.BLINK);
                     }
                 }
             }
@@ -58,4 +55,3 @@ extends Module {
         Myau.blinkManager.setBlinkState(false, BlinkModules.BLINK);
     }
 }
-

@@ -1,13 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.Minecraft
- *  net.minecraft.network.play.client.C03PacketPlayer$C06PacketPlayerPosLook
- *  net.minecraft.network.play.server.S02PacketChat
- *  net.minecraft.network.play.server.S08PacketPlayerPosLook
- *  net.minecraft.network.play.server.S08PacketPlayerPosLook$EnumFlags
- */
 package myau.module.modules;
 
 import myau.event.EventTarget;
@@ -19,13 +9,13 @@ import myau.util.PacketUtil;
 import myau.util.RandomUtil;
 import myau.util.RotationUtil;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.play.client.C03PacketPlayer;
+import net.minecraft.network.play.client.C03PacketPlayer.C06PacketPlayerPosLook;
 import net.minecraft.network.play.server.S02PacketChat;
 import net.minecraft.network.play.server.S08PacketPlayerPosLook;
+import net.minecraft.network.play.server.S08PacketPlayerPosLook.EnumFlags;
 
-public class NoRotate
-extends Module {
-    private static final Minecraft mc = Minecraft.func_71410_x();
+public class NoRotate extends Module {
+    private static final Minecraft mc = Minecraft.getMinecraft();
     private boolean reset = false;
 
     public NoRotate() {
@@ -34,46 +24,61 @@ extends Module {
 
     @EventTarget
     public void onPacket(PacketEvent event) {
-        if (this.isEnabled() && event.getType() == EventType.RECEIVE && !event.isCancelled() && NoRotate.mc.field_71439_g != null && NoRotate.mc.field_71441_e != null && (NoRotate.mc.field_71439_g.field_70177_z != -180.0f || NoRotate.mc.field_71439_g.field_70125_A != 0.0f)) {
-            String msg;
-            if (event.getPacket() instanceof S02PacketChat && ((msg = ((S02PacketChat)event.getPacket()).func_148915_c().func_150254_d()).contains("\u00a7e\u00a7lProtect your bed and destroy the enemy beds.") || msg.contains("\u00a7eYou will respawn in \u00a7r\u00a7c1 \u00a7r\u00a7esecond!"))) {
-                this.reset = true;
-            }
-            if (event.getPacket() instanceof S08PacketPlayerPosLook) {
-                if (this.reset) {
-                    this.reset = false;
-                    return;
+        if (this.isEnabled() && event.getType() == EventType.RECEIVE && !event.isCancelled() && mc.thePlayer != null && mc.theWorld != null) {
+            if (mc.thePlayer.rotationYaw != -180.0F || mc.thePlayer.rotationPitch != 0.0F) {
+                if (event.getPacket() instanceof S02PacketChat) {
+                    String msg = ((S02PacketChat) event.getPacket()).getChatComponent().getFormattedText();
+                    if (msg.contains("§e§lProtect your bed and destroy the enemy beds.") || msg.contains("§eYou will respawn in §r§c1 §r§esecond!")) {
+                        this.reset = true;
+                    }
                 }
-                S08PacketPlayerPosLook packet = (S08PacketPlayerPosLook)event.getPacket();
-                event.setCancelled(true);
-                double x = packet.func_148932_c();
-                double y = packet.func_148928_d();
-                double z = packet.func_148933_e();
-                float yaw = packet.func_148931_f();
-                float pitch = packet.func_148930_g();
-                if (packet.func_179834_f().contains(S08PacketPlayerPosLook.EnumFlags.X)) {
-                    x += NoRotate.mc.field_71439_g.field_70165_t;
-                } else {
-                    NoRotate.mc.field_71439_g.field_70159_w = 0.0;
+                if (event.getPacket() instanceof S08PacketPlayerPosLook) {
+                    if (this.reset) {
+                        this.reset = false;
+                        return;
+                    }
+                    S08PacketPlayerPosLook packet = (S08PacketPlayerPosLook) event.getPacket();
+                    event.setCancelled(true);
+                    double x = packet.getX();
+                    double y = packet.getY();
+                    double z = packet.getZ();
+                    float yaw = packet.getYaw();
+                    float pitch = packet.getPitch();
+                    if (packet.func_179834_f().contains(EnumFlags.X)) {
+                        x += mc.thePlayer.posX;
+                    } else {
+                        mc.thePlayer.motionX = 0.0;
+                    }
+                    if (packet.func_179834_f().contains(EnumFlags.Y)) {
+                        y += mc.thePlayer.posY;
+                    } else {
+                        mc.thePlayer.motionY = 0.0;
+                    }
+                    if (packet.func_179834_f().contains(EnumFlags.Z)) {
+                        z += mc.thePlayer.posZ;
+                    } else {
+                        mc.thePlayer.motionZ = 0.0;
+                    }
+                    if (packet.func_179834_f().contains(EnumFlags.X_ROT)) {
+                        pitch += mc.thePlayer.rotationPitch;
+                    }
+                    if (packet.func_179834_f().contains(EnumFlags.Y_ROT)) {
+                        yaw += mc.thePlayer.rotationYaw;
+                    }
+                    mc.thePlayer
+                            .setPositionAndRotation(
+                                    x,
+                                    y,
+                                    z,
+                                    RotationUtil.quantizeAngle(mc.thePlayer.rotationYaw + RandomUtil.nextFloat(-0.01F, 0.01F)),
+                                    RotationUtil.quantizeAngle(mc.thePlayer.rotationPitch + RandomUtil.nextFloat(-0.01F, 0.01F))
+                            );
+                    PacketUtil.sendPacketNoEvent(
+                            new C06PacketPlayerPosLook(
+                                    mc.thePlayer.posX, mc.thePlayer.getEntityBoundingBox().minY, mc.thePlayer.posZ, yaw % 360.0F, pitch % 360.0F, false
+                            )
+                    );
                 }
-                if (packet.func_179834_f().contains(S08PacketPlayerPosLook.EnumFlags.Y)) {
-                    y += NoRotate.mc.field_71439_g.field_70163_u;
-                } else {
-                    NoRotate.mc.field_71439_g.field_70181_x = 0.0;
-                }
-                if (packet.func_179834_f().contains(S08PacketPlayerPosLook.EnumFlags.Z)) {
-                    z += NoRotate.mc.field_71439_g.field_70161_v;
-                } else {
-                    NoRotate.mc.field_71439_g.field_70179_y = 0.0;
-                }
-                if (packet.func_179834_f().contains(S08PacketPlayerPosLook.EnumFlags.X_ROT)) {
-                    pitch += NoRotate.mc.field_71439_g.field_70125_A;
-                }
-                if (packet.func_179834_f().contains(S08PacketPlayerPosLook.EnumFlags.Y_ROT)) {
-                    yaw += NoRotate.mc.field_71439_g.field_70177_z;
-                }
-                NoRotate.mc.field_71439_g.func_70080_a(x, y, z, RotationUtil.quantizeAngle(NoRotate.mc.field_71439_g.field_70177_z + RandomUtil.nextFloat(-0.01f, 0.01f)), RotationUtil.quantizeAngle(NoRotate.mc.field_71439_g.field_70125_A + RandomUtil.nextFloat(-0.01f, 0.01f)));
-                PacketUtil.sendPacketNoEvent(new C03PacketPlayer.C06PacketPlayerPosLook(NoRotate.mc.field_71439_g.field_70165_t, NoRotate.mc.field_71439_g.func_174813_aQ().field_72338_b, NoRotate.mc.field_71439_g.field_70161_v, yaw % 360.0f, pitch % 360.0f, false));
             }
         }
     }
@@ -88,4 +93,3 @@ extends Module {
         this.reset = false;
     }
 }
-

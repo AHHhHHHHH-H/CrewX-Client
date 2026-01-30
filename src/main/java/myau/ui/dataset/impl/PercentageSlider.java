@@ -1,14 +1,11 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.ui.dataset.impl;
 
 import myau.enums.ChatColors;
+import myau.property.properties.IntProperty;
 import myau.property.properties.PercentProperty;
 import myau.ui.dataset.Slider;
 
-public class PercentageSlider
-        extends Slider {
+public class PercentageSlider extends Slider {
     private final PercentProperty property;
 
     public PercentageSlider(PercentProperty property) {
@@ -17,72 +14,65 @@ public class PercentageSlider
 
     @Override
     public double getInput() {
-        return ((Integer)this.property.getValue()).intValue();
+        return property.getValue();
     }
 
     @Override
     public double getMin() {
-        return this.property.getMinimum().intValue();
+        return property.getMinimum();
     }
 
     @Override
     public double getMax() {
-        return this.property.getMaximum().intValue();
+        return property.getMaximum();
     }
 
     @Override
     public void setValue(double value) {
-        this.property.setValue(new Double(value).intValue());
+        property.setValue(new Double(value).intValue());
     }
 
     @Override
     public void setValueString(String value) {
         try {
-            this.property.setValue(Integer.parseInt(value));
-        }
-        catch (Exception exception) {
-            // empty catch block
+            property.setValue(Integer.parseInt(value));
+        } catch (Exception ignore) {
         }
     }
 
     @Override
     public String getName() {
-        return this.property.getName().replace("-", " ");
+        return property.getName().replace("-", " ");
     }
 
     @Override
     public String getValueString() {
-        return ((Integer)this.property.getValue()).toString();
+        return property.getValue().toString();
     }
 
     @Override
     public String getValueColorString() {
-        return ChatColors.formatColor(this.property.formatValue());
+        return ChatColors.formatColor(property.formatValue());
     }
 
     @Override
     public double getIncrement() {
-        return 1.0;
+        return 1;
     }
 
     @Override
     public boolean isVisible() {
-        return this.property.isVisible();
+        return property.isVisible();
     }
 
     @Override
     public void stepping(boolean increment) {
         if (increment) {
-            if ((Integer)this.property.getValue() >= this.property.getMaximum()) {
-                return;
-            }
-            this.property.setValue((Integer)this.property.getValue() + 1);
+            if (property.getValue() >= property.getMaximum()) return;
+            property.setValue(property.getValue() + 1);
         } else {
-            if ((Integer)this.property.getValue() <= this.property.getMinimum()) {
-                return;
-            }
-            this.property.setValue((Integer)this.property.getValue() - 1);
+            if (property.getValue() <= property.getMinimum()) return;
+            property.setValue(property.getValue() - 1);
         }
     }
 }
-

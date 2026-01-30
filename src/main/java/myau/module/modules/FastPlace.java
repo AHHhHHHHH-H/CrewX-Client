@@ -1,78 +1,65 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockObsidian
- *  net.minecraft.client.Minecraft
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.item.Item
- *  net.minecraft.item.ItemBlock
- *  net.minecraft.item.ItemFishingRod
- *  net.minecraft.item.ItemStack
- *  net.minecraft.util.MovingObjectPosition
- *  net.minecraft.util.MovingObjectPosition$MovingObjectType
- *  net.minecraft.world.World
- */
 package myau.module.modules;
 
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.util.Locale;
 import myau.event.EventTarget;
 import myau.event.types.EventType;
 import myau.events.TickEvent;
 import myau.mixin.IAccessorMinecraft;
 import myau.module.Module;
-import myau.property.properties.BooleanProperty;
-import myau.property.properties.FloatProperty;
 import myau.util.BlockUtil;
 import myau.util.RotationUtil;
+import myau.property.properties.BooleanProperty;
+import myau.property.properties.FloatProperty;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockObsidian;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemFishingRod;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.world.World;
+import net.minecraft.util.MovingObjectPosition.MovingObjectType;
 
-public class FastPlace
-extends Module {
-    private static final Minecraft mc = Minecraft.func_71410_x();
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
+
+public class FastPlace extends Module {
+    private static final Minecraft mc = Minecraft.getMinecraft();
     private static final DecimalFormat df = new DecimalFormat("0.0#", new DecimalFormatSymbols(Locale.US));
     private long delayMS = 0L;
-    public final FloatProperty delay = new FloatProperty("delay", Float.valueOf(1.0f), Float.valueOf(1.0f), Float.valueOf(3.0f));
+    public final FloatProperty delay = new FloatProperty("delay", 1.0F, 1.0F, 3.0F);
     public final BooleanProperty blocksOnly = new BooleanProperty("blocks-only", true);
     public final BooleanProperty placeFix = new BooleanProperty("place-fix", true);
     public final BooleanProperty skipObsidian = new BooleanProperty("skip-obsidian", true);
     public final BooleanProperty skipInteractable = new BooleanProperty("skip-interactable", true);
 
     private boolean canPlace() {
-        ItemStack stack = FastPlace.mc.field_71439_g.func_70694_bm();
+        ItemStack stack = mc.thePlayer.getHeldItem();
         if (stack != null) {
-            Item item = stack.func_77973_b();
+            Item item = stack.getItem();
             if (item instanceof ItemFishingRod) {
                 return false;
             }
             if (item instanceof ItemBlock) {
-                Block block = ((ItemBlock)item).func_179223_d();
-                if (((Boolean)this.skipObsidian.getValue()).booleanValue() && block instanceof BlockObsidian) {
+                Block block = ((ItemBlock) item).getBlock();
+                if (skipObsidian.getValue() && block instanceof BlockObsidian) {
                     return false;
                 }
-                if (((Boolean)this.skipInteractable.getValue()).booleanValue() && BlockUtil.isInteractable(block)) {
+                if (skipInteractable.getValue() && BlockUtil.isInteractable(block)) {
                     return false;
                 }
-                if (!((Boolean)this.placeFix.getValue()).booleanValue()) {
+                if (!(Boolean) this.placeFix.getValue()) {
                     return true;
                 }
-                MovingObjectPosition mop = RotationUtil.rayTrace(FastPlace.mc.field_71439_g.field_70177_z, FastPlace.mc.field_71439_g.field_70125_A, (double)FastPlace.mc.field_71442_b.func_78757_d(), 1.0f);
-                return mop != null && mop.field_72313_a == MovingObjectPosition.MovingObjectType.BLOCK && ((ItemBlock)item).func_179222_a((World)FastPlace.mc.field_71441_e, mop.func_178782_a(), mop.field_178784_b, (EntityPlayer)FastPlace.mc.field_71439_g, stack);
+                MovingObjectPosition mop = RotationUtil.rayTrace(
+                        mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch, mc.playerController.getBlockReachDistance(), 1.0F
+                );
+                return mop != null
+                        && mop.typeOfHit == MovingObjectType.BLOCK
+                        && ((ItemBlock) item).canPlaceBlockOnSide(mc.theWorld, mop.getBlockPos(), mop.sideHit, mc.thePlayer, stack);
             }
         }
-        return (Boolean)this.blocksOnly.getValue() == false;
+        return !(Boolean) this.blocksOnly.getValue();
     }
 
     public FastPlace() {
@@ -82,15 +69,15 @@ extends Module {
     @EventTarget
     public void onTick(TickEvent event) {
         if (this.isEnabled() && event.getType() == EventType.PRE) {
-            int rightClickDelayTimer = ((IAccessorMinecraft)mc).getRightClickDelayTimer();
+            int rightClickDelayTimer = ((IAccessorMinecraft) mc).getRightClickDelayTimer();
             if (rightClickDelayTimer == 4) {
-                this.delayMS += (long)(50.0f * ((Float)this.delay.getValue()).floatValue());
+                this.delayMS = this.delayMS + (long) (50.0F * this.delay.getValue());
             }
             if (this.delayMS > 0L) {
-                this.delayMS -= 50L;
+                this.delayMS = this.delayMS - 50;
             }
             if (this.delayMS <= 0L && rightClickDelayTimer > 1 && this.canPlace()) {
-                ((IAccessorMinecraft)mc).setRightClickDelayTimer(0);
+                ((IAccessorMinecraft) mc).setRightClickDelayTimer(0);
             }
         }
     }
@@ -105,4 +92,3 @@ extends Module {
         return new String[]{df.format(this.delay.getValue())};
     }
 }
-

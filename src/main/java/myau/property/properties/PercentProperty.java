@@ -1,17 +1,11 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.gson.JsonObject
- */
 package myau.property.properties;
 
 import com.google.gson.JsonObject;
-import java.util.function.BooleanSupplier;
 import myau.property.Property;
 
-public class PercentProperty
-extends Property<Integer> {
+import java.util.function.BooleanSupplier;
+
+public class PercentProperty extends Property<Integer> {
     private final Integer minimum;
     private final Integer maximum;
 
@@ -51,15 +45,14 @@ extends Property<Integer> {
 
     @Override
     public void write(JsonObject jsonObject) {
-        jsonObject.addProperty(this.getName(), (Number)this.getValue());
+        jsonObject.addProperty(this.getName(), this.getValue());
     }
 
     public Integer getMaximum() {
-        return this.maximum;
+        return maximum;
     }
 
     public Integer getMinimum() {
-        return this.minimum;
+        return minimum;
     }
 }
-

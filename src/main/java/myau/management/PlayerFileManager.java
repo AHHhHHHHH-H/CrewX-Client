@@ -1,84 +1,73 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.Minecraft
- */
 package myau.management;
 
-import java.awt.Color;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.stream.Collectors;
 import net.minecraft.client.Minecraft;
 
+import java.awt.*;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
+
 public abstract class PlayerFileManager {
-    public static Minecraft mc = Minecraft.func_71410_x();
-    public ArrayList<String> players = new ArrayList();
+    public static Minecraft mc = Minecraft.getMinecraft();
+    public ArrayList<String> players;
     public File file;
     public Color color;
 
     public PlayerFileManager(File file, Color color) {
+        this.players = new ArrayList<>();
         this.file = file;
         this.color = color;
     }
 
     public void load() {
-        if (!this.file.exists()) {
+        if (!file.exists()) {
             try {
-                if ((this.file.getParentFile().exists() || this.file.getParentFile().mkdirs()) && this.file.createNewFile()) {
-                    System.out.printf("File created: %s%n", this.file.getName());
+                if ((file.getParentFile().exists() || file.getParentFile().mkdirs()) && file.createNewFile()) {
+                    System.out.printf("File created: %s%n", file.getName());
                 }
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 System.err.println("Error creating file: " + e.getMessage());
             }
         }
-        try (BufferedReader reader = new BufferedReader(new FileReader(this.file));){
-            this.players.clear();
-            this.players.addAll(reader.lines().map(String::trim).collect(Collectors.toList()));
-        }
-        catch (IOException e) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            players.clear();
+            players.addAll(reader.lines().map(String::trim).collect(Collectors.toList()));
+        } catch (IOException e) {
             System.err.println("Error reading file: " + e.getMessage());
         }
     }
 
     public void save() {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(this.file));){
-            writer.print(String.join((CharSequence)"\n", this.players));
-        }
-        catch (IOException e) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
+            writer.print(String.join("\n", players));
+        } catch (IOException e) {
             System.err.println("Error saving file: " + e.getMessage());
         }
     }
 
     public String add(String name) {
-        if (this.isFriend(name)) {
+        if (isFriend(name)) {
             return null;
         }
-        this.players.add(name);
-        this.save();
+        players.add(name);
+        save();
         return name;
     }
 
     public String remove(String name) {
-        for (String player : this.players) {
-            if (!player.equalsIgnoreCase(name)) continue;
-            this.players.remove(player);
-            this.save();
-            return player;
+        for (String player : players) {
+            if (player.equalsIgnoreCase(name)) {
+                players.remove(player);
+                save();
+                return player;
+            }
         }
         return null;
     }
 
     public void clear() {
-        this.players.clear();
-        this.save();
+        players.clear();
+        save();
     }
 
     public boolean isFriend(String string) {
@@ -93,4 +82,3 @@ public abstract class PlayerFileManager {
         return this.color;
     }
 }
-

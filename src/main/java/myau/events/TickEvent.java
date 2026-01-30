@@ -1,13 +1,9 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.events;
 
 import myau.event.events.Event;
 import myau.event.types.EventType;
 
-public class TickEvent
-implements Event {
+public class TickEvent implements Event {
     private final EventType type;
 
     public TickEvent(EventType type) {
@@ -18,4 +14,3 @@ implements Event {
         return this.type;
     }
 }
-

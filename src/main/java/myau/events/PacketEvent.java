@@ -1,17 +1,10 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.network.Packet
- */
 package myau.events;
 
 import myau.event.events.callables.EventCancellable;
 import myau.event.types.EventType;
 import net.minecraft.network.Packet;
 
-public class PacketEvent
-extends EventCancellable {
+public class PacketEvent extends EventCancellable {
     private final EventType type;
     private final Packet<?> packet;
 
@@ -28,4 +21,3 @@ extends EventCancellable {
         return this.packet;
     }
 }
-

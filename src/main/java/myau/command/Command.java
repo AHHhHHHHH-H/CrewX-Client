@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.command;
 
 import java.util.ArrayList;
@@ -12,6 +9,5 @@ public abstract class Command {
         this.names = arrayList;
     }
 
-    public abstract void runCommand(ArrayList<String> var1);
+    public abstract void runCommand(ArrayList<String> args);
 }
-

@@ -1,16 +1,5 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.ai.attributes.AttributeModifier
- *  net.minecraft.potion.PotionEffect
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- */
 package myau.mixin;
 
-import java.util.Map;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.potion.PotionEffect;
@@ -19,19 +8,20 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@SideOnly(value=Side.CLIENT)
-@Mixin(value={EntityLivingBase.class})
+import java.util.Map;
+
+@SideOnly(Side.CLIENT)
+@Mixin({EntityLivingBase.class})
 public interface IAccessorEntityLivingBase {
     @Accessor
-    public Map<Integer, PotionEffect> getActivePotionsMap();
+    Map<Integer, PotionEffect> getActivePotionsMap();
 
     @Accessor
-    public AttributeModifier getSprintingSpeedBoostModifier();
+    AttributeModifier getSprintingSpeedBoostModifier();
 
     @Accessor
-    public int getJumpTicks();
+    int getJumpTicks();
 
     @Accessor
-    public void setJumpTicks(int var1);
+    void setJumpTicks(int integer);
 }
-

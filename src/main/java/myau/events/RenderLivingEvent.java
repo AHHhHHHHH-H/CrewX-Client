@@ -1,17 +1,10 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.entity.EntityLivingBase
- */
 package myau.events;
 
 import myau.event.events.Event;
 import myau.event.types.EventType;
 import net.minecraft.entity.EntityLivingBase;
 
-public class RenderLivingEvent
-implements Event {
+public class RenderLivingEvent implements Event {
     private final EventType type;
     private final EntityLivingBase entity;
 
@@ -28,4 +21,3 @@ implements Event {
         return this.entity;
     }
 }
-

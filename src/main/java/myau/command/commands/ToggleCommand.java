@@ -1,26 +1,25 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.command.commands;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Locale;
 import myau.Myau;
 import myau.command.Command;
 import myau.module.Module;
 import myau.util.ChatUtil;
 
-public class ToggleCommand
-extends Command {
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Locale;
+
+public class ToggleCommand extends Command {
     public ToggleCommand() {
-        super(new ArrayList<String>(Arrays.asList("toggle", "t")));
+        super(new ArrayList<>(Arrays.asList("toggle", "t")));
     }
 
     @Override
     public void runCommand(ArrayList<String> args) {
         if (args.size() < 2) {
-            ChatUtil.sendFormatted(String.format("%sUsage: .%s <&omodule&r>&r", Myau.clientName, args.get(0).toLowerCase(Locale.ROOT)));
+            ChatUtil.sendFormatted(
+                    String.format("%sUsage: .%s <&omodule&r>&r", Myau.clientName, args.get(0).toLowerCase(Locale.ROOT))
+            );
         } else {
             Module module = Myau.moduleManager.getModule(args.get(1));
             if (module == null) {
@@ -28,9 +27,13 @@ extends Command {
             } else {
                 boolean changed = true;
                 if (args.size() >= 3) {
-                    if (args.get(2).equalsIgnoreCase("true") || args.get(2).equalsIgnoreCase("on") || args.get(2).equalsIgnoreCase("1")) {
+                    if (args.get(2).equalsIgnoreCase("true")
+                            || args.get(2).equalsIgnoreCase("on")
+                            || args.get(2).equalsIgnoreCase("1")) {
                         changed = !module.isEnabled();
-                    } else if (args.get(2).equalsIgnoreCase("false") || args.get(2).equalsIgnoreCase("off") || args.get(2).equalsIgnoreCase("0")) {
+                    } else if (args.get(2).equalsIgnoreCase("false")
+                            || args.get(2).equalsIgnoreCase("off")
+                            || args.get(2).equalsIgnoreCase("0")) {
                         changed = module.isEnabled();
                     }
                 }
@@ -41,4 +44,3 @@ extends Command {
         }
     }
 }
-

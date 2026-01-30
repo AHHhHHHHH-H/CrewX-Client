@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.ui.dataset;
 
 public abstract class Slider {
@@ -10,9 +7,9 @@ public abstract class Slider {
 
     public abstract double getMax();
 
-    public abstract void setValue(double var1);
+    public abstract void setValue(double value);
 
-    public abstract void setValueString(String var1);
+    public abstract void setValueString(String value);
 
     public abstract String getName();
 
@@ -24,6 +21,5 @@ public abstract class Slider {
 
     public abstract boolean isVisible();
 
-    public abstract void stepping(boolean var1);
+    public abstract void stepping(boolean increment);
 }
-

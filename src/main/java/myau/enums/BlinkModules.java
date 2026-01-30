@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.enums;
 
 public enum BlinkModules {
@@ -9,7 +6,5 @@ public enum BlinkModules {
     AUTO_BLOCK,
     BLINK,
     NO_FALL,
-    NO_SLOW;
-
+    NO_SLOW
 }
-

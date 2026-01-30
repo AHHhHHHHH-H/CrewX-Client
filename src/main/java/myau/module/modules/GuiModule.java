@@ -1,34 +1,25 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.Minecraft
- *  net.minecraft.client.gui.GuiScreen
- */
 package myau.module.modules;
 
 import myau.module.Module;
 import myau.ui.ClickGui;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
+import org.lwjgl.input.Keyboard;
 
-public class GuiModule
-extends Module {
-    private static final Minecraft mc = Minecraft.func_71410_x();
+public class GuiModule extends Module {
+    private static final Minecraft mc = Minecraft.getMinecraft();
     private ClickGui clickGui;
 
     public GuiModule() {
         super("ClickGui", false);
-        this.setKey(54);
+        setKey(Keyboard.KEY_RSHIFT);
     }
 
     @Override
     public void onEnabled() {
-        this.setEnabled(false);
-        if (this.clickGui == null) {
-            this.clickGui = new ClickGui();
+        setEnabled(false);
+        if(clickGui == null){
+            clickGui = new ClickGui();
         }
-        mc.func_147108_a((GuiScreen)this.clickGui);
+        mc.displayGuiScreen(clickGui);
     }
 }
-

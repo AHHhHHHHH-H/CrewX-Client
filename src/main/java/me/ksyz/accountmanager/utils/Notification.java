@@ -1,8 +1,11 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package me.ksyz.accountmanager.utils;
 
+/*
+ * This file is derived from https://github.com/ksyzov/AccountManager.
+ * Originally licensed under the GNU LGPL.
+ *
+ * This modified version is licensed under the GNU GPL v3.
+ */
 public class Notification {
     private final String message;
     private final long duration;
@@ -15,11 +18,10 @@ public class Notification {
     }
 
     public String getMessage() {
-        return this.message;
+        return message;
     }
 
     public boolean isExpired() {
-        return this.duration >= 0L && this.duration < System.currentTimeMillis() - this.startTime;
+        return duration >= 0 && duration < System.currentTimeMillis() - startTime;
     }
 }
-

@@ -1,23 +1,15 @@
-/*
- * Decompiled with CFR 0.152.
- *
- * Could not load the following classes:
- *  net.minecraft.client.Minecraft
- *  net.minecraft.client.gui.GuiButton
- *  net.minecraft.client.gui.GuiScreen
- *  net.minecraft.client.gui.GuiTextField
- */
 package myau.ui.callback;
 
-import java.io.IOException;
-import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
+import org.lwjgl.input.Keyboard;
 
-public class GuiInput
-        extends GuiScreen {
+import java.io.IOException;
+import java.util.function.Consumer;
+
+public class GuiInput extends GuiScreen {
     private final String title;
     private final String defaultValue;
     private final Consumer<String> callback;
@@ -33,55 +25,60 @@ public class GuiInput
     }
 
     public static void prompt(String title, String defaultValue, Consumer<String> callback, GuiScreen caller) {
-        Minecraft.func_71410_x().func_147108_a((GuiScreen)new GuiInput(title, defaultValue, callback, caller));
+        Minecraft.getMinecraft().displayGuiScreen(new GuiInput(title,defaultValue, callback, caller));
     }
 
-    public void func_73866_w_() {
-        int centerX = this.field_146294_l / 2;
-        int centerY = this.field_146295_m / 2;
-        this.textField = new GuiTextField(0, this.field_146289_q, centerX - 100, centerY - 10, 200, 20);
-        this.textField.func_146180_a(this.defaultValue);
-        this.textField.func_146195_b(true);
-        this.buttonOk = new GuiButton(0, centerX - 100, centerY + 20, 95, 20, "Confirm");
-        this.field_146292_n.add(this.buttonOk);
-        this.field_146292_n.add(new GuiButton(1, centerX + 5, centerY + 20, 95, 20, "Cancel"));
+    @Override
+    public void initGui() {
+        int centerX = this.width / 2;
+        int centerY = this.height / 2;
+
+        textField = new GuiTextField(0, this.fontRendererObj, centerX - 100, centerY - 10, 200, 20);
+        textField.setText(defaultValue);
+        textField.setFocused(true);
+
+        this.buttonList.add(buttonOk = new GuiButton(0, centerX - 100, centerY + 20, 95, 20, "Confirm"));
+        this.buttonList.add(new GuiButton(1, centerX + 5, centerY + 20, 95, 20, "Cancel"));
     }
 
-    protected void func_146284_a(GuiButton button) {
-        if (button == this.buttonOk && this.callback != null) {
-            this.callback.accept(this.textField.func_146179_b());
+    @Override
+    protected void actionPerformed(GuiButton button) {
+        if (button == buttonOk) {
+            if (callback != null) callback.accept(textField.getText());
         }
-        this.field_146297_k.func_147108_a(this.caller);
+        this.mc.displayGuiScreen(caller);
     }
 
-    protected void func_73869_a(char typedChar, int keyCode) {
-        this.textField.func_146201_a(typedChar, keyCode);
-        if (keyCode == 28 || keyCode == 156) {
-            this.func_146284_a(this.buttonOk);
-        } else if (keyCode == 1) {
-            this.func_146284_a(null);
+    @Override
+    protected void keyTyped(char typedChar, int keyCode) {
+        textField.textboxKeyTyped(typedChar, keyCode);
+        if (keyCode == Keyboard.KEY_RETURN || keyCode == Keyboard.KEY_NUMPADENTER) {
+            actionPerformed(buttonOk);
+        } else if (keyCode == Keyboard.KEY_ESCAPE) {
+            actionPerformed(null);
         }
     }
 
-    protected void func_73864_a(int mouseX, int mouseY, int mouseButton) {
+    @Override
+    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
         try {
-            super.func_73864_a(mouseX, mouseY, mouseButton);
-        }
-        catch (IOException e) {
+            super.mouseClicked(mouseX,mouseY,mouseButton);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        this.textField.func_146192_a(mouseX, mouseY, mouseButton);
+        textField.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
-    public void func_73863_a(int mouseX, int mouseY, float partialTicks) {
-        this.func_146276_q_();
-        this.func_73732_a(this.field_146289_q, this.title, this.field_146294_l / 2, this.field_146295_m / 2 - 35, 0xFFFFFF);
-        this.textField.func_146194_f();
-        super.func_73863_a(mouseX, mouseY, partialTicks);
+    @Override
+    public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        drawDefaultBackground();
+        drawCenteredString(fontRendererObj, title, width / 2, height / 2 - 35, 0xFFFFFF);
+        textField.drawTextBox();
+        super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
-    public void func_73876_c() {
-        this.textField.func_146178_a();
+    @Override
+    public void updateScreen() {
+        textField.updateCursorCounter();
     }
 }
-

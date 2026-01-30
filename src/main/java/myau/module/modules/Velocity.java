@@ -1,18 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.common.base.CaseFormat
- *  net.minecraft.client.Minecraft
- *  net.minecraft.entity.Entity
- *  net.minecraft.network.Packet
- *  net.minecraft.network.play.INetHandlerPlayClient
- *  net.minecraft.network.play.server.S12PacketEntityVelocity
- *  net.minecraft.network.play.server.S19PacketEntityStatus
- *  net.minecraft.network.play.server.S27PacketExplosion
- *  net.minecraft.potion.Potion
- *  net.minecraft.world.World
- */
 package myau.module.modules;
 
 import com.google.common.base.CaseFormat;
@@ -20,15 +5,9 @@ import myau.Myau;
 import myau.enums.DelayModules;
 import myau.event.EventTarget;
 import myau.event.types.EventType;
-import myau.events.KnockbackEvent;
-import myau.events.LivingUpdateEvent;
-import myau.events.LoadWorldEvent;
-import myau.events.PacketEvent;
-import myau.events.UpdateEvent;
+import myau.events.*;
 import myau.mixin.IAccessorEntity;
 import myau.module.Module;
-import myau.module.modules.KillAura;
-import myau.module.modules.LongJump;
 import myau.property.properties.BooleanProperty;
 import myau.property.properties.IntProperty;
 import myau.property.properties.ModeProperty;
@@ -37,17 +16,14 @@ import myau.util.ChatUtil;
 import myau.util.MoveUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
-import net.minecraft.network.Packet;
-import net.minecraft.network.play.INetHandlerPlayClient;
 import net.minecraft.network.play.server.S12PacketEntityVelocity;
 import net.minecraft.network.play.server.S19PacketEntityStatus;
 import net.minecraft.network.play.server.S27PacketExplosion;
 import net.minecraft.potion.Potion;
-import net.minecraft.world.World;
 
-public class Velocity
-extends Module {
-    private static final Minecraft mc = Minecraft.func_71410_x();
+public class Velocity extends Module {
+    private static final Minecraft mc = Minecraft.getMinecraft();
+
     private int chanceCounter = 0;
     private int delayChanceCounter = 0;
     private boolean pendingExplosion = false;
@@ -55,11 +31,13 @@ extends Module {
     private boolean jumpFlag = false;
     private boolean reverseFlag = false;
     private boolean delayActive = false;
+
     private boolean shouldJump = false;
     private int jumpCooldown = 0;
+
     public final ModeProperty mode = new ModeProperty("mode", 0, new String[]{"VANILLA", "JUMP", "DELAY", "REVERSE", "LEGIT_TEST"});
-    public final IntProperty delayTicks = new IntProperty("delay-ticks", 3, 1, 20, () -> (Integer)this.mode.getValue() == 2);
-    public final PercentProperty delayChance = new PercentProperty("delay-chance", 100, () -> (Integer)this.mode.getValue() == 2);
+    public final IntProperty delayTicks = new IntProperty("delay-ticks", 3, 1, 20, () -> this.mode.getValue() == 2);
+    public final PercentProperty delayChance = new PercentProperty("delay-chance", 100, () -> this.mode.getValue() == 2);
     public final PercentProperty chance = new PercentProperty("chance", 100);
     public final PercentProperty horizontal = new PercentProperty("horizontal", 0);
     public final PercentProperty vertical = new PercentProperty("vertical", 100);
@@ -69,12 +47,12 @@ extends Module {
     public final BooleanProperty debugLog = new BooleanProperty("debug-log", false);
 
     private boolean isInLiquidOrWeb() {
-        return Velocity.mc.field_71439_g.func_70090_H() || Velocity.mc.field_71439_g.func_180799_ab() || ((IAccessorEntity)Velocity.mc.field_71439_g).getIsInWeb();
+        return mc.thePlayer.isInWater() || mc.thePlayer.isInLava() || ((IAccessorEntity) mc.thePlayer).getIsInWeb();
     }
 
     private boolean canDelay() {
-        KillAura killAura = (KillAura)Myau.moduleManager.modules.get(KillAura.class);
-        return Velocity.mc.field_71439_g.field_70122_E && (!killAura.isEnabled() || !killAura.shouldAutoBlock());
+        KillAura killAura = (KillAura) Myau.moduleManager.modules.get(KillAura.class);
+        return mc.thePlayer.onGround && (!killAura.isEnabled() || !killAura.shouldAutoBlock());
     }
 
     public Velocity() {
@@ -86,38 +64,38 @@ extends Module {
         if (!this.isEnabled() || event.isCancelled()) {
             this.pendingExplosion = false;
             this.allowNext = true;
-        } else if (!this.allowNext || !((Boolean)this.fakeCheck.getValue()).booleanValue()) {
+        } else if (!this.allowNext || !(Boolean) this.fakeCheck.getValue()) {
             this.allowNext = true;
             if (this.pendingExplosion) {
                 this.pendingExplosion = false;
-                if ((Integer)this.explosionHorizontal.getValue() > 0) {
-                    event.setX(event.getX() * (double)((Integer)this.explosionHorizontal.getValue()).intValue() / 100.0);
-                    event.setZ(event.getZ() * (double)((Integer)this.explosionHorizontal.getValue()).intValue() / 100.0);
+                if (this.explosionHorizontal.getValue() > 0) {
+                    event.setX(event.getX() * (double) this.explosionHorizontal.getValue() / 100.0);
+                    event.setZ(event.getZ() * (double) this.explosionHorizontal.getValue() / 100.0);
                 } else {
-                    event.setX(Velocity.mc.field_71439_g.field_70159_w);
-                    event.setZ(Velocity.mc.field_71439_g.field_70179_y);
+                    event.setX(mc.thePlayer.motionX);
+                    event.setZ(mc.thePlayer.motionZ);
                 }
-                if ((Integer)this.explosionVertical.getValue() > 0) {
-                    event.setY(event.getY() * (double)((Integer)this.explosionVertical.getValue()).intValue() / 100.0);
+                if (this.explosionVertical.getValue() > 0) {
+                    event.setY(event.getY() * (double) this.explosionVertical.getValue() / 100.0);
                 } else {
-                    event.setY(Velocity.mc.field_71439_g.field_70181_x);
+                    event.setY(mc.thePlayer.motionY);
                 }
             } else {
-                this.chanceCounter = this.chanceCounter % 100 + (Integer)this.chance.getValue();
+                this.chanceCounter = this.chanceCounter % 100 + this.chance.getValue();
                 if (this.chanceCounter >= 100) {
-                    this.jumpFlag = ((Integer)this.mode.getValue() == 1 || (Integer)this.mode.getValue() == 2) && event.getY() > 0.0;
-                    boolean bl = this.delayActive = (Integer)this.mode.getValue() == 3;
-                    if ((Integer)this.horizontal.getValue() > 0) {
-                        event.setX(event.getX() * (double)((Integer)this.horizontal.getValue()).intValue() / 100.0);
-                        event.setZ(event.getZ() * (double)((Integer)this.horizontal.getValue()).intValue() / 100.0);
+                    this.jumpFlag = (this.mode.getValue() == 1 || this.mode.getValue() == 2) && event.getY() > 0.0;
+                    this.delayActive = this.mode.getValue() == 3;
+                    if (this.horizontal.getValue() > 0) {
+                        event.setX(event.getX() * (double) this.horizontal.getValue() / 100.0);
+                        event.setZ(event.getZ() * (double) this.horizontal.getValue() / 100.0);
                     } else {
-                        event.setX(Velocity.mc.field_71439_g.field_70159_w);
-                        event.setZ(Velocity.mc.field_71439_g.field_70179_y);
+                        event.setX(mc.thePlayer.motionX);
+                        event.setZ(mc.thePlayer.motionZ);
                     }
-                    if ((Integer)this.vertical.getValue() > 0) {
-                        event.setY(event.getY() * (double)((Integer)this.vertical.getValue()).intValue() / 100.0);
+                    if (this.vertical.getValue() > 0) {
+                        event.setY(event.getY() * (double) this.vertical.getValue() / 100.0);
                     } else {
-                        event.setY(Velocity.mc.field_71439_g.field_70181_x);
+                        event.setY(mc.thePlayer.motionY);
                     }
                 }
             }
@@ -127,7 +105,12 @@ extends Module {
     @EventTarget
     public void onUpdate(UpdateEvent event) {
         if (event.getType() == EventType.POST) {
-            if (this.reverseFlag && (this.canDelay() || this.isInLiquidOrWeb() || Myau.delayManager.getDelay() >= (long)((Integer)this.delayTicks.getValue()).intValue())) {
+            if (this.reverseFlag
+                    && (
+                    this.canDelay()
+                            || this.isInLiquidOrWeb()
+                            || Myau.delayManager.getDelay() >= (long) this.delayTicks.getValue()
+            )) {
                 Myau.delayManager.setDelayState(false, DelayModules.VELOCITY);
                 this.reverseFlag = false;
             }
@@ -135,23 +118,27 @@ extends Module {
                 MoveUtil.setSpeed(MoveUtil.getSpeed(), MoveUtil.getMoveYaw());
                 this.delayActive = false;
             }
-            if ((Integer)this.mode.getValue() == 4) {
-                int hurtTime = Velocity.mc.field_71439_g.field_70737_aN;
+
+            if (this.mode.getValue() == 4) {
+                int hurtTime = mc.thePlayer.hurtTime;
+
                 if (hurtTime >= 8) {
-                    if (this.jumpCooldown <= 0) {
-                        this.shouldJump = true;
-                        this.jumpCooldown = 2;
+                    if (jumpCooldown <= 0) {
+                        shouldJump = true;
+                        jumpCooldown = 2;
                     }
                 } else if (hurtTime <= 1) {
-                    this.shouldJump = false;
-                    this.jumpCooldown = 0;
+                    shouldJump = false;
+                    jumpCooldown = 0;
                 }
-                if (this.shouldJump && Velocity.mc.field_71439_g.field_70122_E && this.jumpCooldown <= 0) {
-                    Velocity.mc.field_71439_g.func_70664_aZ();
-                    this.shouldJump = false;
+
+                if (shouldJump && mc.thePlayer.onGround && jumpCooldown <= 0) {
+                    mc.thePlayer.jump();
+                    shouldJump = false;
                 }
-                if (this.jumpCooldown > 0) {
-                    --this.jumpCooldown;
+
+                if (jumpCooldown > 0) {
+                    jumpCooldown--;
                 }
             }
         }
@@ -161,8 +148,8 @@ extends Module {
     public void onLivingUpdate(LivingUpdateEvent event) {
         if (this.jumpFlag) {
             this.jumpFlag = false;
-            if (Velocity.mc.field_71439_g.field_70122_E && Velocity.mc.field_71439_g.func_70051_ag() && !Velocity.mc.field_71439_g.func_70644_a(Potion.field_76430_j) && !this.isInLiquidOrWeb()) {
-                Velocity.mc.field_71439_g.field_71158_b.field_78901_c = true;
+            if (mc.thePlayer.onGround && mc.thePlayer.isSprinting() && !mc.thePlayer.isPotionActive(Potion.jump) && !this.isInLiquidOrWeb()) {
+                mc.thePlayer.movementInput.jump = true;
             }
         }
     }
@@ -171,38 +158,64 @@ extends Module {
     public void onPacket(PacketEvent event) {
         if (this.isEnabled() && event.getType() == EventType.RECEIVE && !event.isCancelled()) {
             if (event.getPacket() instanceof S12PacketEntityVelocity) {
-                S12PacketEntityVelocity packet = (S12PacketEntityVelocity)event.getPacket();
-                if (packet.func_149412_c() == Velocity.mc.field_71439_g.func_145782_y()) {
-                    LongJump longJump = (LongJump)Myau.moduleManager.modules.get(LongJump.class);
-                    if (!((Integer)this.mode.getValue() != 2 || this.reverseFlag || this.canDelay() || this.isInLiquidOrWeb() || this.pendingExplosion || this.allowNext && ((Boolean)this.fakeCheck.getValue()).booleanValue() || longJump.isEnabled() && longJump.canStartJump())) {
-                        this.delayChanceCounter = this.delayChanceCounter % 100 + (Integer)this.delayChance.getValue();
+                S12PacketEntityVelocity packet = (S12PacketEntityVelocity) event.getPacket();
+                if (packet.getEntityID() == mc.thePlayer.getEntityId()) {
+                    LongJump longJump = (LongJump) Myau.moduleManager.modules.get(LongJump.class);
+                    if (this.mode.getValue() == 2
+                            && !this.reverseFlag
+                            && !this.canDelay()
+                            && !this.isInLiquidOrWeb()
+                            && !this.pendingExplosion
+                            && (!this.allowNext || !(Boolean) this.fakeCheck.getValue())
+                            && (!longJump.isEnabled() || !longJump.canStartJump())) {
+                        this.delayChanceCounter = this.delayChanceCounter % 100 + this.delayChance.getValue();
                         if (this.delayChanceCounter >= 100) {
                             Myau.delayManager.setDelayState(true, DelayModules.VELOCITY);
-                            Myau.delayManager.delayedPacket.offer((Packet<INetHandlerPlayClient>)packet);
+                            Myau.delayManager.delayedPacket.offer(packet);
                             event.setCancelled(true);
                             this.reverseFlag = true;
                             return;
                         }
                     }
-                    if (((Boolean)this.debugLog.getValue()).booleanValue()) {
-                        ChatUtil.sendFormatted(String.format("%sVelocity (&otick: %d, x: %.2f, y: %.2f, z: %.2f&r)&r", Myau.clientName, Velocity.mc.field_71439_g.field_70173_aa, (double)packet.func_149411_d() / 8000.0, (double)packet.func_149410_e() / 8000.0, (double)packet.func_149409_f() / 8000.0));
+                    if (this.debugLog.getValue()) {
+                        ChatUtil.sendFormatted(
+                                String.format(
+                                        "%sVelocity (&otick: %d, x: %.2f, y: %.2f, z: %.2f&r)&r",
+                                        Myau.clientName,
+                                        mc.thePlayer.ticksExisted,
+                                        (double) packet.getMotionX() / 8000.0,
+                                        (double) packet.getMotionY() / 8000.0,
+                                        (double) packet.getMotionZ() / 8000.0
+                                )
+                        );
                     }
                 }
             } else if (!(event.getPacket() instanceof S27PacketExplosion)) {
-                S19PacketEntityStatus packet;
-                Entity entity;
-                if (event.getPacket() instanceof S19PacketEntityStatus && (entity = (packet = (S19PacketEntityStatus)event.getPacket()).func_149161_a((World)Velocity.mc.field_71441_e)) != null && entity.equals((Object)Velocity.mc.field_71439_g) && packet.func_149160_c() == 2) {
-                    this.allowNext = false;
+                if (event.getPacket() instanceof S19PacketEntityStatus) {
+                    S19PacketEntityStatus packet = (S19PacketEntityStatus) event.getPacket();
+                    Entity entity = packet.getEntity(mc.theWorld);
+                    if (entity != null && entity.equals(mc.thePlayer) && packet.getOpCode() == 2) {
+                        this.allowNext = false;
+                    }
                 }
             } else {
-                S27PacketExplosion packet = (S27PacketExplosion)event.getPacket();
-                if (packet.func_149149_c() != 0.0f || packet.func_149144_d() != 0.0f || packet.func_149147_e() != 0.0f) {
+                S27PacketExplosion packet = (S27PacketExplosion) event.getPacket();
+                if (packet.func_149149_c() != 0.0F || packet.func_149144_d() != 0.0F || packet.func_149147_e() != 0.0F) {
                     this.pendingExplosion = true;
-                    if ((Integer)this.explosionHorizontal.getValue() == 0 || (Integer)this.explosionVertical.getValue() == 0) {
+                    if (this.explosionHorizontal.getValue() == 0 || this.explosionVertical.getValue() == 0) {
                         event.setCancelled(true);
                     }
-                    if (((Boolean)this.debugLog.getValue()).booleanValue()) {
-                        ChatUtil.sendFormatted(String.format("%sExplosion (&otick: %d, x: %.2f, y: %.2f, z: %.2f&r)&r", Myau.clientName, Velocity.mc.field_71439_g.field_70173_aa, Velocity.mc.field_71439_g.field_70159_w + (double)packet.func_149149_c(), Velocity.mc.field_71439_g.field_70181_x + (double)packet.func_149144_d(), Velocity.mc.field_71439_g.field_70179_y + (double)packet.func_149147_e()));
+                    if (this.debugLog.getValue()) {
+                        ChatUtil.sendFormatted(
+                                String.format(
+                                        "%sExplosion (&otick: %d, x: %.2f, y: %.2f, z: %.2f&r)&r",
+                                        Myau.clientName,
+                                        mc.thePlayer.ticksExisted,
+                                        mc.thePlayer.motionX + (double) packet.func_149149_c(),
+                                        mc.thePlayer.motionY + (double) packet.func_149144_d(),
+                                        mc.thePlayer.motionZ + (double) packet.func_149147_e()
+                                )
+                        );
                     }
                 }
             }
@@ -227,4 +240,3 @@ extends Module {
         return new String[]{CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, this.mode.getModeString())};
     }
 }
-

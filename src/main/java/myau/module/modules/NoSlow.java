@@ -1,103 +1,96 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.Minecraft
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.passive.EntityVillager
- *  net.minecraft.util.BlockPos
- */
 package myau.module.modules;
 
 import myau.Myau;
 import myau.enums.FloatModules;
 import myau.event.EventTarget;
+import myau.event.types.Priority;
 import myau.events.LivingUpdateEvent;
 import myau.events.PlayerUpdateEvent;
 import myau.events.RightClickMouseEvent;
 import myau.module.Module;
-import myau.property.properties.BooleanProperty;
-import myau.property.properties.ModeProperty;
-import myau.property.properties.PercentProperty;
 import myau.util.BlockUtil;
 import myau.util.ItemUtil;
 import myau.util.PlayerUtil;
 import myau.util.TeamUtil;
+import myau.property.properties.BooleanProperty;
+import myau.property.properties.PercentProperty;
+import myau.property.properties.ModeProperty;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.util.BlockPos;
 
-public class NoSlow
-extends Module {
-    private static final Minecraft mc = Minecraft.func_71410_x();
+public class NoSlow extends Module {
+    private static final Minecraft mc = Minecraft.getMinecraft();
     private int lastSlot = -1;
     public final ModeProperty swordMode = new ModeProperty("sword-mode", 1, new String[]{"NONE", "VANILLA"});
-    public final PercentProperty swordMotion = new PercentProperty("sword-motion", 100, () -> (Integer)this.swordMode.getValue() != 0);
-    public final BooleanProperty swordSprint = new BooleanProperty("sword-sprint", true, () -> (Integer)this.swordMode.getValue() != 0);
+    public final PercentProperty swordMotion = new PercentProperty("sword-motion", 100, () -> this.swordMode.getValue() != 0);
+    public final BooleanProperty swordSprint = new BooleanProperty("sword-sprint", true, () -> this.swordMode.getValue() != 0);
     public final ModeProperty foodMode = new ModeProperty("food-mode", 0, new String[]{"NONE", "VANILLA", "FLOAT"});
-    public final PercentProperty foodMotion = new PercentProperty("food-motion", 100, () -> (Integer)this.foodMode.getValue() != 0);
-    public final BooleanProperty foodSprint = new BooleanProperty("food-sprint", true, () -> (Integer)this.foodMode.getValue() != 0);
+    public final PercentProperty foodMotion = new PercentProperty("food-motion", 100, () -> this.foodMode.getValue() != 0);
+    public final BooleanProperty foodSprint = new BooleanProperty("food-sprint", true, () -> this.foodMode.getValue() != 0);
     public final ModeProperty bowMode = new ModeProperty("bow-mode", 0, new String[]{"NONE", "VANILLA", "FLOAT"});
-    public final PercentProperty bowMotion = new PercentProperty("bow-motion", 100, () -> (Integer)this.bowMode.getValue() != 0);
-    public final BooleanProperty bowSprint = new BooleanProperty("bow-sprint", true, () -> (Integer)this.bowMode.getValue() != 0);
+    public final PercentProperty bowMotion = new PercentProperty("bow-motion", 100, () -> this.bowMode.getValue() != 0);
+    public final BooleanProperty bowSprint = new BooleanProperty("bow-sprint", true, () -> this.bowMode.getValue() != 0);
 
     public NoSlow() {
         super("NoSlow", false);
     }
 
     public boolean isSwordActive() {
-        return (Integer)this.swordMode.getValue() != 0 && ItemUtil.isHoldingSword();
+        return this.swordMode.getValue() != 0 && ItemUtil.isHoldingSword();
     }
 
     public boolean isFoodActive() {
-        return (Integer)this.foodMode.getValue() != 0 && ItemUtil.isEating();
+        return this.foodMode.getValue() != 0 && ItemUtil.isEating();
     }
 
     public boolean isBowActive() {
-        return (Integer)this.bowMode.getValue() != 0 && ItemUtil.isUsingBow();
+        return this.bowMode.getValue() != 0 && ItemUtil.isUsingBow();
     }
 
     public boolean isFloatMode() {
-        return (Integer)this.foodMode.getValue() == 2 && ItemUtil.isEating() || (Integer)this.bowMode.getValue() == 2 && ItemUtil.isUsingBow();
+        return this.foodMode.getValue() == 2 && ItemUtil.isEating()
+                || this.bowMode.getValue() == 2 && ItemUtil.isUsingBow();
     }
 
     public boolean isAnyActive() {
-        return NoSlow.mc.field_71439_g.func_71039_bw() && (this.isSwordActive() || this.isFoodActive() || this.isBowActive());
+        return mc.thePlayer.isUsingItem() && (this.isSwordActive() || this.isFoodActive() || this.isBowActive());
     }
 
     public boolean canSprint() {
-        return this.isSwordActive() && (Boolean)this.swordSprint.getValue() != false || this.isFoodActive() && (Boolean)this.foodSprint.getValue() != false || this.isBowActive() && (Boolean)this.bowSprint.getValue() != false;
+        return this.isSwordActive() && this.swordSprint.getValue()
+                || this.isFoodActive() && this.foodSprint.getValue()
+                || this.isBowActive() && this.bowSprint.getValue();
     }
 
     public int getMotionMultiplier() {
         if (ItemUtil.isHoldingSword()) {
-            return (Integer)this.swordMotion.getValue();
+            return this.swordMotion.getValue();
+        } else if (ItemUtil.isEating()) {
+            return this.foodMotion.getValue();
+        } else {
+            return ItemUtil.isUsingBow() ? this.bowMotion.getValue() : 100;
         }
-        if (ItemUtil.isEating()) {
-            return (Integer)this.foodMotion.getValue();
-        }
-        return ItemUtil.isUsingBow() ? (Integer)this.bowMotion.getValue() : 100;
     }
 
     @EventTarget
     public void onLivingUpdate(LivingUpdateEvent event) {
         if (this.isEnabled() && this.isAnyActive()) {
-            float multiplier = (float)this.getMotionMultiplier() / 100.0f;
-            NoSlow.mc.field_71439_g.field_71158_b.field_78900_b *= multiplier;
-            NoSlow.mc.field_71439_g.field_71158_b.field_78902_a *= multiplier;
+            float multiplier = (float) this.getMotionMultiplier() / 100.0F;
+            mc.thePlayer.movementInput.moveForward *= multiplier;
+            mc.thePlayer.movementInput.moveStrafe *= multiplier;
             if (!this.canSprint()) {
-                NoSlow.mc.field_71439_g.func_70031_b(false);
+                mc.thePlayer.setSprinting(false);
             }
         }
     }
 
-    @EventTarget(value=3)
+    @EventTarget(Priority.LOW)
     public void onPlayerUpdate(PlayerUpdateEvent event) {
         if (this.isEnabled() && this.isFloatMode()) {
-            int item = NoSlow.mc.field_71439_g.field_71071_by.field_70461_c;
+            int item = mc.thePlayer.inventory.currentItem;
             if (this.lastSlot != item && PlayerUtil.isUsingItem()) {
                 this.lastSlot = item;
                 Myau.floatManager.setFloatState(true, FloatModules.NO_SLOW);
@@ -111,28 +104,28 @@ extends Module {
     @EventTarget
     public void onRightClick(RightClickMouseEvent event) {
         if (this.isEnabled()) {
-            if (NoSlow.mc.field_71476_x != null) {
-                switch (NoSlow.mc.field_71476_x.field_72313_a) {
-                    case BLOCK: {
-                        BlockPos blockPos = NoSlow.mc.field_71476_x.func_178782_a();
-                        if (!BlockUtil.isInteractable(blockPos) || PlayerUtil.isSneaking()) break;
-                        return;
-                    }
-                    case ENTITY: {
-                        Entity entityHit = NoSlow.mc.field_71476_x.field_72308_g;
+            if (mc.objectMouseOver != null) {
+                switch (mc.objectMouseOver.typeOfHit) {
+                    case BLOCK:
+                        BlockPos blockPos = mc.objectMouseOver.getBlockPos();
+                        if (BlockUtil.isInteractable(blockPos) && !PlayerUtil.isSneaking()) {
+                            return;
+                        }
+                        break;
+                    case ENTITY:
+                        Entity entityHit = mc.objectMouseOver.entityHit;
                         if (entityHit instanceof EntityVillager) {
                             return;
                         }
-                        if (!(entityHit instanceof EntityLivingBase) || !TeamUtil.isShop((EntityLivingBase)entityHit)) break;
-                        return;
-                    }
+                        if (entityHit instanceof EntityLivingBase && TeamUtil.isShop((EntityLivingBase) entityHit)) {
+                            return;
+                        }
                 }
             }
-            if (this.isFloatMode() && !Myau.floatManager.isPredicted() && NoSlow.mc.field_71439_g.field_70122_E) {
+            if (this.isFloatMode() && !Myau.floatManager.isPredicted() && mc.thePlayer.onGround) {
                 event.setCancelled(true);
-                NoSlow.mc.field_71439_g.field_70181_x = 0.42f;
+                mc.thePlayer.motionY = 0.42F;
             }
         }
     }
 }
-

@@ -1,23 +1,5 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.Minecraft
- *  net.minecraft.network.Packet
- *  net.minecraft.network.handshake.client.C00Handshake
- *  net.minecraft.network.login.client.C00PacketLoginStart
- *  net.minecraft.network.login.client.C01PacketEncryptionResponse
- *  net.minecraft.network.play.client.C00PacketKeepAlive
- *  net.minecraft.network.play.client.C01PacketChatMessage
- *  net.minecraft.network.play.client.C03PacketPlayer
- *  net.minecraft.network.status.client.C00PacketServerQuery
- *  net.minecraft.network.status.client.C01PacketPing
- *  net.minecraft.util.Vec3
- */
 package myau.management;
 
-import java.util.Deque;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import myau.event.EventTarget;
 import myau.event.types.EventType;
 import myau.events.PacketEvent;
@@ -35,50 +17,64 @@ import net.minecraft.network.status.client.C00PacketServerQuery;
 import net.minecraft.network.status.client.C01PacketPing;
 import net.minecraft.util.Vec3;
 
+import java.util.Deque;
+import java.util.concurrent.ConcurrentLinkedDeque;
+
 public class LagManager {
-    private static final Minecraft mc = Minecraft.func_71410_x();
-    public final Deque<LagPacket> packetQueue = new ConcurrentLinkedDeque<LagPacket>();
-    private int tickDelay = 0;
-    private boolean flushing = false;
-    private Vec3 lastPosition = new Vec3(0.0, 0.0, 0.0);
+    private static final Minecraft mc = Minecraft.getMinecraft();
+    public final Deque<LagPacket> packetQueue;
+    private int tickDelay;
+    private boolean flushing;
+    private Vec3 lastPosition;
+
+    public LagManager() {
+        this.packetQueue = new ConcurrentLinkedDeque<>();
+        this.tickDelay = 0;
+        this.flushing = false;
+        this.lastPosition = new Vec3(0.0, 0.0, 0.0);
+    }
 
     private void flushQueue() {
-        if (mc.func_147114_u() == null) {
+        if (mc.getNetHandler() == null) {
             this.packetQueue.clear();
         } else {
-            this.flushing = true;
-            while (!this.packetQueue.isEmpty()) {
-                C03PacketPlayer c03;
+            for (this.flushing = true; !this.packetQueue.isEmpty(); this.packetQueue.poll()) {
                 LagPacket lagPacket = this.packetQueue.peek();
-                if (this.tickDelay > 0 && lagPacket.delay <= this.tickDelay) break;
-                PacketUtil.sendPacketNoEvent(lagPacket.packet);
-                if (lagPacket.packet instanceof C03PacketPlayer && (c03 = (C03PacketPlayer)lagPacket.packet).func_149466_j()) {
-                    this.lastPosition = new Vec3(c03.func_149464_c(), c03.func_149467_d(), c03.func_149472_e());
+                if (this.tickDelay > 0 && lagPacket.delay <= this.tickDelay) {
+                    break;
                 }
-                this.packetQueue.poll();
+                PacketUtil.sendPacketNoEvent(lagPacket.packet);
+                if (lagPacket.packet instanceof C03PacketPlayer) {
+                    C03PacketPlayer c03 = (C03PacketPlayer) lagPacket.packet;
+                    if (c03.isMoving()) {
+                        this.lastPosition = new Vec3(c03.getPositionX(), c03.getPositionY(), c03.getPositionZ());
+                    }
+                }
             }
             this.flushing = false;
         }
     }
 
     private void incrementDelays() {
-        this.packetQueue.forEach(z -> ++z.delay);
+        this.packetQueue.forEach(z -> z.delay++);
     }
 
     public boolean handlePacket(Packet<?> packet) {
-        C03PacketPlayer c03;
         this.flushQueue();
         if (packet instanceof C00PacketKeepAlive || packet instanceof C01PacketChatMessage) {
             return false;
-        }
-        if ((long)this.tickDelay > 0L) {
+        } else if ((long) this.tickDelay > 0L) {
             this.packetQueue.offer(new LagPacket(packet));
             return true;
+        } else {
+            if (packet instanceof C03PacketPlayer) {
+                C03PacketPlayer c03 = (C03PacketPlayer) packet;
+                if (c03.isMoving()) {
+                    this.lastPosition = new Vec3(c03.getPositionX(), c03.getPositionY(), c03.getPositionZ());
+                }
+            }
+            return false;
         }
-        if (packet instanceof C03PacketPlayer && (c03 = (C03PacketPlayer)packet).func_149466_j()) {
-            this.lastPosition = new Vec3(c03.func_149464_c(), c03.func_149467_d(), c03.func_149472_e());
-        }
-        return false;
     }
 
     public void setDelay(int delay) {
@@ -96,7 +92,7 @@ public class LagManager {
     @EventTarget
     public void onTick(TickEvent event) {
         if (event.getType() == EventType.POST) {
-            if (LagManager.mc.field_71439_g.field_70128_L) {
+            if (mc.thePlayer.isDead) {
                 this.setDelay(0);
             }
             this.incrementDelays();
@@ -106,7 +102,11 @@ public class LagManager {
 
     @EventTarget
     public void onPacket(PacketEvent event) {
-        if (event.getPacket() instanceof C00Handshake || event.getPacket() instanceof C00PacketLoginStart || event.getPacket() instanceof C00PacketServerQuery || event.getPacket() instanceof C01PacketPing || event.getPacket() instanceof C01PacketEncryptionResponse) {
+        if (event.getPacket() instanceof C00Handshake
+                || event.getPacket() instanceof C00PacketLoginStart
+                || event.getPacket() instanceof C00PacketServerQuery
+                || event.getPacket() instanceof C01PacketPing
+                || event.getPacket() instanceof C01PacketEncryptionResponse) {
             this.setDelay(0);
         }
     }
@@ -121,4 +121,3 @@ public class LagManager {
         }
     }
 }
-

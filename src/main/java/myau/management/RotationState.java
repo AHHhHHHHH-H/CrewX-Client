@@ -1,17 +1,10 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.Minecraft
- *  net.minecraft.util.MathHelper
- */
 package myau.management;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.MathHelper;
 
 public class RotationState {
-    private static final Minecraft mc = Minecraft.func_71410_x();
+    private static final Minecraft mc = Minecraft.getMinecraft();
     private static int state = -1;
     private static float prevRenderYawOffset;
     private static float renderYawOffset;
@@ -23,18 +16,18 @@ public class RotationState {
     private static int priority;
 
     private static float calculateRenderYawOffset(float targetYaw, float currentYawOffset) {
-        float f4;
-        float f5;
         float newYawOffset = currentYawOffset;
-        double deltaX = RotationState.mc.field_71439_g.field_70165_t - RotationState.mc.field_71439_g.field_70169_q;
-        double deltaZ = RotationState.mc.field_71439_g.field_70161_v - RotationState.mc.field_71439_g.field_70166_s;
-        if ((float)(deltaX * deltaX + deltaZ * deltaZ) > 0.0025000002f) {
-            newYawOffset = (float)MathHelper.func_181159_b((double)deltaZ, (double)deltaX) * 180.0f / (float)Math.PI - 90.0f;
+        double deltaX = RotationState.mc.thePlayer.posX - RotationState.mc.thePlayer.prevPosX;
+        double deltaZ = RotationState.mc.thePlayer.posZ - RotationState.mc.thePlayer.prevPosZ;
+        if ((float) (deltaX * deltaX + deltaZ * deltaZ) > 0.0025000002f) {
+            newYawOffset = (float) MathHelper.atan2(deltaZ, deltaX) * 180.0f / (float) Math.PI - 90.0f;
         }
-        if (RotationState.mc.field_71439_g.field_70733_aJ > 0.0f) {
+        if (RotationState.mc.thePlayer.swingProgress > 0.0f) {
             newYawOffset = targetYaw;
         }
-        if ((f5 = MathHelper.func_76142_g((float)(targetYaw - (currentYawOffset += (f4 = MathHelper.func_76142_g((float)(newYawOffset - currentYawOffset))) * 0.3f)))) < -75.0f) {
+        float f4 = MathHelper.wrapAngleTo180_float(newYawOffset - currentYawOffset);
+        float f5 = MathHelper.wrapAngleTo180_float(targetYaw - (currentYawOffset += f4 * 0.3f));
+        if (f5 < -75.0f) {
             f5 = -75.0f;
         }
         if (f5 >= 75.0f) {
@@ -50,11 +43,11 @@ public class RotationState {
     public static void applyState(boolean bl, float f, float f2, float f3, int n) {
         state = bl ? 0 : state + 1;
         prevRenderYawOffset = renderYawOffset;
-        renderYawOffset = bl ? RotationState.calculateRenderYawOffset(f, renderYawOffset) : RotationState.mc.field_71439_g.field_70761_aq;
+        renderYawOffset = bl ? RotationState.calculateRenderYawOffset(f, renderYawOffset) : RotationState.mc.thePlayer.renderYawOffset;
         prevRotationYawHead = rotationYawHead;
-        rotationYawHead = bl ? f : RotationState.mc.field_71439_g.field_70759_as;
+        rotationYawHead = bl ? f : RotationState.mc.thePlayer.rotationYawHead;
         prevRotationPitch = rotationPitch;
-        rotationPitch = bl ? f2 : RotationState.mc.field_71439_g.field_70125_A;
+        rotationPitch = bl ? f2 : RotationState.mc.thePlayer.rotationPitch;
         smoothYaw = f3;
         priority = n;
     }
@@ -64,9 +57,7 @@ public class RotationState {
     }
 
     public static boolean isRotated(int state) {
-        if (RotationState.state < 0) {
-            return false;
-        }
+        if (RotationState.state < 0) return false;
         return RotationState.state <= state;
     }
 
@@ -102,4 +93,3 @@ public class RotationState {
         return priority;
     }
 }
-

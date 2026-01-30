@@ -1,12 +1,8 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.events;
 
 import myau.event.events.Event;
 
-public class PickEvent
-implements Event {
+public class PickEvent implements Event {
     private double range;
 
     public PickEvent(double double1) {
@@ -21,4 +17,3 @@ implements Event {
         this.range = double1;
     }
 }
-

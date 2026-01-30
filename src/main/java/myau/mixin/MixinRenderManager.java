@@ -1,13 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.entity.EntityPlayerSP
- *  net.minecraft.client.renderer.entity.RenderManager
- *  net.minecraft.entity.Entity
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- */
 package myau.mixin;
 
 import myau.management.RotationState;
@@ -22,8 +12,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@SideOnly(value=Side.CLIENT)
-@Mixin(value={RenderManager.class}, priority=9999)
+@SideOnly(Side.CLIENT)
+@Mixin(value = {RenderManager.class}, priority = 9999)
 public abstract class MixinRenderManager {
     @Unique
     private float _prevRenderYawOffset;
@@ -38,36 +28,41 @@ public abstract class MixinRenderManager {
     @Unique
     private float _rotationPitch;
 
-    @Inject(method={"renderEntityStatic"}, at={@At(value="HEAD")})
+    @Inject(
+            method = {"renderEntityStatic"},
+            at = {@At("HEAD")}
+    )
     private void renderEntityStatic(Entity entity, float float2, boolean boolean3, CallbackInfoReturnable<Boolean> callbackInfoReturnable) {
         if (entity instanceof EntityPlayerSP && RotationState.isRotated(1)) {
-            EntityPlayerSP entityPlayerSP = (EntityPlayerSP)entity;
-            this._prevRenderYawOffset = entityPlayerSP.field_70760_ar;
-            this._renderYawOffset = entityPlayerSP.field_70761_aq;
-            this._prevRotationYawHead = entityPlayerSP.field_70758_at;
-            this._rotationYawHead = entityPlayerSP.field_70759_as;
-            this._prevRotationPitch = entityPlayerSP.field_70127_C;
-            this._rotationPitch = entityPlayerSP.field_70125_A;
-            entityPlayerSP.field_70760_ar = RotationState.getPrevRenderYawOffset();
-            entityPlayerSP.field_70761_aq = RotationState.getRenderYawOffset();
-            entityPlayerSP.field_70758_at = RotationState.getPrevRotationYawHead();
-            entityPlayerSP.field_70759_as = RotationState.getRotationYawHead();
-            entityPlayerSP.field_70127_C = RotationState.getPrevRotationPitch();
-            entityPlayerSP.field_70125_A = RotationState.getRotationPitch();
+            EntityPlayerSP entityPlayerSP = (EntityPlayerSP) entity;
+            this._prevRenderYawOffset = entityPlayerSP.prevRenderYawOffset;
+            this._renderYawOffset = entityPlayerSP.renderYawOffset;
+            this._prevRotationYawHead = entityPlayerSP.prevRotationYawHead;
+            this._rotationYawHead = entityPlayerSP.rotationYawHead;
+            this._prevRotationPitch = entityPlayerSP.prevRotationPitch;
+            this._rotationPitch = entityPlayerSP.rotationPitch;
+            entityPlayerSP.prevRenderYawOffset = RotationState.getPrevRenderYawOffset();
+            entityPlayerSP.renderYawOffset = RotationState.getRenderYawOffset();
+            entityPlayerSP.prevRotationYawHead = RotationState.getPrevRotationYawHead();
+            entityPlayerSP.rotationYawHead = RotationState.getRotationYawHead();
+            entityPlayerSP.prevRotationPitch = RotationState.getPrevRotationPitch();
+            entityPlayerSP.rotationPitch = RotationState.getRotationPitch();
         }
     }
 
-    @Inject(method={"renderEntityStatic"}, at={@At(value="RETURN")})
+    @Inject(
+            method = {"renderEntityStatic"},
+            at = {@At("RETURN")}
+    )
     private void renderEntityStaticPost(Entity entity, float float2, boolean boolean3, CallbackInfoReturnable<Boolean> callbackInfoReturnable) {
         if (entity instanceof EntityPlayerSP && RotationState.isRotated(1)) {
-            EntityPlayerSP entityPlayerSP = (EntityPlayerSP)entity;
-            entityPlayerSP.field_70760_ar = this._prevRenderYawOffset;
-            entityPlayerSP.field_70761_aq = this._renderYawOffset;
-            entityPlayerSP.field_70758_at = this._prevRotationYawHead;
-            entityPlayerSP.field_70759_as = this._rotationYawHead;
-            entityPlayerSP.field_70127_C = this._prevRotationPitch;
-            entityPlayerSP.field_70125_A = this._rotationPitch;
+            EntityPlayerSP entityPlayerSP = (EntityPlayerSP) entity;
+            entityPlayerSP.prevRenderYawOffset = this._prevRenderYawOffset;
+            entityPlayerSP.renderYawOffset = this._renderYawOffset;
+            entityPlayerSP.prevRotationYawHead = this._prevRotationYawHead;
+            entityPlayerSP.rotationYawHead = this._rotationYawHead;
+            entityPlayerSP.prevRotationPitch = this._prevRotationPitch;
+            entityPlayerSP.rotationPitch = this._rotationPitch;
         }
     }
 }
-

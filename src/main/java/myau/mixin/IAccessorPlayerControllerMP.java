@@ -1,11 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.multiplayer.PlayerControllerMP
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- */
 package myau.mixin;
 
 import net.minecraft.client.multiplayer.PlayerControllerMP;
@@ -15,31 +7,30 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
-@SideOnly(value=Side.CLIENT)
-@Mixin(value={PlayerControllerMP.class})
+@SideOnly(Side.CLIENT)
+@Mixin({PlayerControllerMP.class})
 public interface IAccessorPlayerControllerMP {
     @Accessor
-    public float getCurBlockDamageMP();
+    float getCurBlockDamageMP();
 
     @Accessor
-    public void setCurBlockDamageMP(float var1);
+    void setCurBlockDamageMP(float float1);
 
     @Accessor
-    public int getBlockHitDelay();
+    int getBlockHitDelay();
 
     @Accessor
-    public void setBlockHitDelay(int var1);
+    void setBlockHitDelay(int integer);
 
     @Accessor
-    public boolean getIsHittingBlock();
+    boolean getIsHittingBlock();
 
     @Accessor
-    public int getCurrentPlayerItem();
+    int getCurrentPlayerItem();
 
     @Accessor
-    public void setCurrentPlayerItem(int var1);
+    void setCurrentPlayerItem(int integer);
 
     @Invoker
-    public void callSyncCurrentPlayItem();
+    void callSyncCurrentPlayItem();
 }
-

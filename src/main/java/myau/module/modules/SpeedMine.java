@@ -1,10 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.Minecraft
- *  net.minecraft.util.MovingObjectPosition$MovingObjectType
- */
 package myau.module.modules;
 
 import myau.event.EventTarget;
@@ -15,11 +8,10 @@ import myau.module.Module;
 import myau.property.properties.IntProperty;
 import myau.property.properties.PercentProperty;
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.MovingObjectPosition.MovingObjectType;
 
-public class SpeedMine
-extends Module {
-    private static final Minecraft mc = Minecraft.func_71410_x();
+public class SpeedMine extends Module {
+    private static final Minecraft mc = Minecraft.getMinecraft();
     public final PercentProperty speed = new PercentProperty("speed", 15);
     public final IntProperty delay = new IntProperty("delay", 0, 0, 4);
 
@@ -29,12 +21,19 @@ extends Module {
 
     @EventTarget
     public void onTick(TickEvent event) {
-        if (this.isEnabled() && event.getType() == EventType.PRE && !SpeedMine.mc.field_71442_b.func_78758_h() && SpeedMine.mc.field_71476_x != null && SpeedMine.mc.field_71476_x.field_72313_a == MovingObjectPosition.MovingObjectType.BLOCK) {
-            float damage;
-            float curBlockDamageMP;
-            ((IAccessorPlayerControllerMP)SpeedMine.mc.field_71442_b).setBlockHitDelay(Math.min(((IAccessorPlayerControllerMP)SpeedMine.mc.field_71442_b).getBlockHitDelay(), (Integer)this.delay.getValue() + 1));
-            if (((IAccessorPlayerControllerMP)SpeedMine.mc.field_71442_b).getIsHittingBlock() && (curBlockDamageMP = ((IAccessorPlayerControllerMP)SpeedMine.mc.field_71442_b).getCurBlockDamageMP()) < (damage = 0.3f * (((Integer)this.speed.getValue()).floatValue() / 100.0f))) {
-                ((IAccessorPlayerControllerMP)SpeedMine.mc.field_71442_b).setCurBlockDamageMP(damage);
+        if (this.isEnabled() && event.getType() == EventType.PRE) {
+            if (!mc.playerController.isInCreativeMode()) {
+                if (mc.objectMouseOver != null && mc.objectMouseOver.typeOfHit == MovingObjectType.BLOCK) {
+                    ((IAccessorPlayerControllerMP) mc.playerController)
+                            .setBlockHitDelay(Math.min(((IAccessorPlayerControllerMP) mc.playerController).getBlockHitDelay(), this.delay.getValue() + 1));
+                    if (((IAccessorPlayerControllerMP) mc.playerController).getIsHittingBlock()) {
+                        float curBlockDamageMP = ((IAccessorPlayerControllerMP) mc.playerController).getCurBlockDamageMP();
+                        float damage = 0.3F * (this.speed.getValue().floatValue() / 100.0F);
+                        if (curBlockDamageMP < damage) {
+                            ((IAccessorPlayerControllerMP) mc.playerController).setCurBlockDamageMP(damage);
+                        }
+                    }
+                }
             }
         }
     }
@@ -44,4 +43,3 @@ extends Module {
         return new String[]{String.format("%d%%", this.speed.getValue())};
     }
 }
-

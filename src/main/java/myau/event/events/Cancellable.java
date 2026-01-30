@@ -1,11 +1,23 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.event.events;
 
+/**
+ * Simple interface which should be implemented in events that can be cancelled.
+ *
+ * @author DarkMagician6
+ * @since August 27, 2013
+ */
 public interface Cancellable {
-    public boolean isCancelled();
+    /**
+     * Gets the current cancelled state of the event.
+     *
+     * @return True if the event is cancelled.
+     */
+    boolean isCancelled();
 
-    public void setCancelled(boolean var1);
+    /**
+     * Sets the cancelled state of the event.
+     *
+     * @param state Whether the event should be cancelled or not.
+     */
+    void setCancelled(boolean state);
 }
-

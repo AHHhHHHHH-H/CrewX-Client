@@ -1,16 +1,9 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.entity.Entity
- */
 package myau.events;
 
 import myau.event.events.Event;
 import net.minecraft.entity.Entity;
 
-public class AttackEvent
-implements Event {
+public class AttackEvent implements Event {
     private final Entity target;
     private boolean cancelled;
 
@@ -31,4 +24,3 @@ implements Event {
         this.cancelled = cancelled;
     }
 }
-

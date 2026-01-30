@@ -1,17 +1,11 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.gson.JsonObject
- */
 package myau.property.properties;
 
 import com.google.gson.JsonObject;
-import java.util.function.BooleanSupplier;
 import myau.property.Property;
 
-public class FloatProperty
-extends Property<Float> {
+import java.util.function.BooleanSupplier;
+
+public class FloatProperty extends Property<Float> {
     private final Float minimum;
     private final Float maximum;
 
@@ -20,7 +14,7 @@ extends Property<Float> {
     }
 
     public FloatProperty(String string, Float value, Float minimum, Float maximum, BooleanSupplier check) {
-        super(string, value, (T floatV) -> floatV.floatValue() >= 0.0f && floatV.floatValue() <= Float.MAX_VALUE, check);
+        super(string, value, floatV -> floatV >= 0 && floatV <= Float.MAX_VALUE, check);
         this.minimum = minimum;
         this.maximum = maximum;
     }
@@ -37,25 +31,24 @@ extends Property<Float> {
 
     @Override
     public boolean parseString(String string) {
-        return this.setValue(Float.valueOf(Float.parseFloat(string)));
+        return this.setValue(Float.parseFloat(string));
     }
 
     @Override
     public boolean read(JsonObject jsonObject) {
-        return this.setValue(Float.valueOf(jsonObject.get(this.getName()).getAsNumber().floatValue()));
+        return this.setValue(jsonObject.get(this.getName()).getAsNumber().floatValue());
     }
 
     @Override
     public void write(JsonObject jsonObject) {
-        jsonObject.addProperty(this.getName(), (Number)this.getValue());
+        jsonObject.addProperty(this.getName(), this.getValue());
     }
 
     public Float getMinimum() {
-        return this.minimum;
+        return minimum;
     }
 
     public Float getMaximum() {
-        return this.maximum;
+        return maximum;
     }
 }
-

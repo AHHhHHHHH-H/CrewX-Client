@@ -1,12 +1,8 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.events;
 
 import myau.event.events.callables.EventCancellable;
 
-public class SwapItemEvent
-extends EventCancellable {
+public class SwapItemEvent extends EventCancellable {
     private final int slot;
     private final int offset;
 
@@ -19,4 +15,3 @@ extends EventCancellable {
         return this.slot >= 0 && this.slot <= 8 ? this.slot : Math.floorMod(integer - this.offset, 9);
     }
 }
-

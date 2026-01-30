@@ -1,12 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.item.ItemStack
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- */
 package myau.mixin;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -16,19 +7,18 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@SideOnly(value=Side.CLIENT)
-@Mixin(value={EntityPlayer.class})
+@SideOnly(Side.CLIENT)
+@Mixin({EntityPlayer.class})
 public interface IAccessorEntityPlayer {
     @Accessor
-    public ItemStack getItemInUse();
+    ItemStack getItemInUse();
 
     @Accessor
-    public void setItemInUse(ItemStack var1);
+    void setItemInUse(ItemStack itemStack);
 
     @Accessor
-    public int getItemInUseCount();
+    int getItemInUseCount();
 
     @Accessor
-    public void setItemInUseCount(int var1);
+    void setItemInUseCount(int integer);
 }
-

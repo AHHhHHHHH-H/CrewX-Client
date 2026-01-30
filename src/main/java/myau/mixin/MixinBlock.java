@@ -1,15 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.block.Block
- *  net.minecraft.util.BlockPos
- *  net.minecraft.util.EnumFacing
- *  net.minecraft.util.EnumWorldBlockLayer
- *  net.minecraft.world.IBlockAccess
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- */
 package myau.mixin;
 
 import myau.Myau;
@@ -26,25 +14,46 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@SideOnly(value=Side.CLIENT)
-@Mixin(value={Block.class}, priority=9999)
+@SideOnly(Side.CLIENT)
+@Mixin(value = {Block.class}, priority = 9999)
 public abstract class MixinBlock {
-    @Inject(method={"shouldSideBeRendered"}, at={@At(value="HEAD")}, cancellable=true)
-    private void shouldSideBeRendered(IBlockAccess iBlockAccess, BlockPos blockPos, EnumFacing enumFacing, CallbackInfoReturnable<Boolean> callbackInfoReturnable) {
-        BlockPos block;
-        Xray xray;
-        if (Myau.moduleManager != null && (xray = (Xray)Myau.moduleManager.modules.get(Xray.class)).isEnabled() && (Integer)xray.mode.getValue() == 1 && xray.shouldRenderSide(Block.func_149682_b((Block)((Block)this))) && xray.checkBlock(block = new BlockPos(blockPos.func_177958_n() - enumFacing.func_176730_m().func_177958_n(), blockPos.func_177956_o() - enumFacing.func_176730_m().func_177956_o(), blockPos.func_177952_p() - enumFacing.func_176730_m().func_177952_p()))) {
-            callbackInfoReturnable.setReturnValue(true);
+    @Inject(
+            method = {"shouldSideBeRendered"},
+            at = {@At("HEAD")},
+            cancellable = true
+    )
+    private void shouldSideBeRendered(
+            IBlockAccess iBlockAccess, BlockPos blockPos, EnumFacing enumFacing, CallbackInfoReturnable<Boolean> callbackInfoReturnable
+    ) {
+        if (Myau.moduleManager != null) {
+            Xray xray = (Xray) Myau.moduleManager.modules.get(Xray.class);
+            if (xray.isEnabled() && xray.mode.getValue() == 1 && xray.shouldRenderSide(Block.getIdFromBlock((Block) ((Object) this)))) {
+                BlockPos block = new BlockPos(
+                        blockPos.getX() - enumFacing.getDirectionVec().getX(),
+                        blockPos.getY() - enumFacing.getDirectionVec().getY(),
+                        blockPos.getZ() - enumFacing.getDirectionVec().getZ()
+                );
+                if (xray.checkBlock(block)) {
+                    callbackInfoReturnable.setReturnValue(true);
+                }
+            }
         }
     }
 
-    @Inject(method={"getBlockLayer"}, at={@At(value="HEAD")}, cancellable=true)
+    @Inject(
+            method = {"getBlockLayer"},
+            at = {@At("HEAD")},
+            cancellable = true
+    )
     private void getBlockLayer(CallbackInfoReturnable<EnumWorldBlockLayer> callbackInfoReturnable) {
-        int id;
-        Xray xray;
-        if (Myau.moduleManager != null && (xray = (Xray)Myau.moduleManager.modules.get(Xray.class)).isEnabled() && (!xray.shouldRenderSide(id = Block.func_149682_b((Block)((Block)this))) || (Integer)xray.mode.getValue() == 0 && !xray.isXrayBlock(id))) {
-            callbackInfoReturnable.setReturnValue(EnumWorldBlockLayer.TRANSLUCENT);
+        if (Myau.moduleManager != null) {
+            Xray xray = (Xray) Myau.moduleManager.modules.get(Xray.class);
+            if (xray.isEnabled()) {
+                int id = Block.getIdFromBlock((Block) ((Object) this));
+                if (!xray.shouldRenderSide(id) || xray.mode.getValue() == 0 && !xray.isXrayBlock(id)) {
+                    callbackInfoReturnable.setReturnValue(EnumWorldBlockLayer.TRANSLUCENT);
+                }
+            }
         }
     }
 }
-

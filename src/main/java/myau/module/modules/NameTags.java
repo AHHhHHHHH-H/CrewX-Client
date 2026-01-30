@@ -1,65 +1,24 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.Minecraft
- *  net.minecraft.client.renderer.GlStateManager
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.boss.EntityDragon
- *  net.minecraft.entity.boss.EntityWither
- *  net.minecraft.entity.monster.EntityBlaze
- *  net.minecraft.entity.monster.EntityCreeper
- *  net.minecraft.entity.monster.EntityEnderman
- *  net.minecraft.entity.monster.EntityMob
- *  net.minecraft.entity.monster.EntitySlime
- *  net.minecraft.entity.passive.EntityAnimal
- *  net.minecraft.entity.passive.EntityBat
- *  net.minecraft.entity.passive.EntitySquid
- *  net.minecraft.entity.passive.EntityVillager
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.item.ItemStack
- *  net.minecraft.potion.Potion
- *  net.minecraft.potion.PotionEffect
- *  net.minecraft.scoreboard.Score
- *  net.minecraft.scoreboard.ScoreObjective
- *  net.minecraft.scoreboard.Scoreboard
- *  net.minecraft.util.EnumChatFormatting
- *  org.apache.commons.lang3.StringUtils
- */
 package myau.module.modules;
 
-import java.awt.Color;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.stream.Collectors;
 import myau.Myau;
 import myau.enums.ChatColors;
 import myau.event.EventTarget;
 import myau.events.Render3DEvent;
 import myau.mixin.IAccessorRenderManager;
 import myau.module.Module;
-import myau.property.properties.BooleanProperty;
-import myau.property.properties.FloatProperty;
-import myau.property.properties.ModeProperty;
-import myau.property.properties.PercentProperty;
 import myau.util.ColorUtil;
 import myau.util.RenderUtil;
 import myau.util.TeamUtil;
+import myau.property.properties.*;
+import myau.property.properties.BooleanProperty;
+import myau.property.properties.ModeProperty;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.boss.EntityDragon;
 import net.minecraft.entity.boss.EntityWither;
-import net.minecraft.entity.monster.EntityBlaze;
-import net.minecraft.entity.monster.EntityCreeper;
-import net.minecraft.entity.monster.EntityEnderman;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.entity.monster.EntitySlime;
+import net.minecraft.entity.monster.*;
 import net.minecraft.entity.passive.EntityAnimal;
 import net.minecraft.entity.passive.EntityBat;
 import net.minecraft.entity.passive.EntitySquid;
@@ -74,11 +33,18 @@ import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.util.EnumChatFormatting;
 import org.apache.commons.lang3.StringUtils;
 
-public class NameTags
-extends Module {
-    private static final Minecraft mc = Minecraft.func_71410_x();
+import java.awt.*;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
+
+public class NameTags extends Module {
+    private static final Minecraft mc = Minecraft.getMinecraft();
     private static final DecimalFormat healthFormatter = new DecimalFormat("0.0", new DecimalFormatSymbols(Locale.US));
-    public final FloatProperty scale = new FloatProperty("scale", Float.valueOf(1.0f), Float.valueOf(0.5f), Float.valueOf(2.0f));
+    public final FloatProperty scale = new FloatProperty("scale", 1.0F, 0.5F, 2.0F);
     public final BooleanProperty autoScale = new BooleanProperty("auto-scale", true);
     public final PercentProperty backgroundOpacity = new PercentProperty("background", 25);
     public final BooleanProperty shadow = new BooleanProperty("shadow", true);
@@ -103,150 +69,189 @@ extends Module {
     }
 
     public boolean shouldRenderTags(EntityLivingBase entityLivingBase) {
-        if (entityLivingBase.field_70725_aQ > 0) {
+        if (entityLivingBase.deathTime > 0) {
             return false;
-        }
-        if (mc.func_175606_aa().func_70032_d((Entity)entityLivingBase) > 512.0f) {
+        } else if (mc.getRenderViewEntity().getDistanceToEntity(entityLivingBase) > 512.0F) {
             return false;
-        }
-        if (entityLivingBase instanceof EntityPlayer) {
-            if (entityLivingBase != NameTags.mc.field_71439_g && entityLivingBase != mc.func_175606_aa()) {
-                if (TeamUtil.isBot((EntityPlayer)entityLivingBase)) {
-                    return (Boolean)this.bots.getValue();
+        } else if (entityLivingBase instanceof EntityPlayer) {
+            if (entityLivingBase != mc.thePlayer && entityLivingBase != mc.getRenderViewEntity()) {
+                if (TeamUtil.isBot((EntityPlayer) entityLivingBase)) {
+                    return this.bots.getValue();
+                } else if (TeamUtil.isFriend((EntityPlayer) entityLivingBase)) {
+                    return this.friends.getValue();
+                } else {
+                    return TeamUtil.isTarget((EntityPlayer) entityLivingBase) ? this.enemies.getValue() : this.players.getValue();
                 }
-                if (TeamUtil.isFriend((EntityPlayer)entityLivingBase)) {
-                    return (Boolean)this.friends.getValue();
-                }
-                return TeamUtil.isTarget((EntityPlayer)entityLivingBase) ? ((Boolean)this.enemies.getValue()).booleanValue() : ((Boolean)this.players.getValue()).booleanValue();
+            } else {
+                return this.self.getValue() && mc.gameSettings.thirdPersonView != 0;
             }
-            return (Boolean)this.self.getValue() != false && NameTags.mc.field_71474_y.field_74320_O != 0;
+        } else if (entityLivingBase instanceof EntityDragon || entityLivingBase instanceof EntityWither) {
+            return !entityLivingBase.isInvisible() && this.bossees.getValue();
+        } else if (!(entityLivingBase instanceof EntityMob) && !(entityLivingBase instanceof EntitySlime)) {
+            return (entityLivingBase instanceof EntityAnimal
+                    || entityLivingBase instanceof EntityBat
+                    || entityLivingBase instanceof EntitySquid
+                    || entityLivingBase instanceof EntityVillager) && this.animals.getValue();
+        } else if (entityLivingBase instanceof EntityCreeper) {
+            return this.creepers.getValue();
+        } else if (entityLivingBase instanceof EntityEnderman) {
+            return this.endermans.getValue();
+        } else {
+            return entityLivingBase instanceof EntityBlaze ? this.blazes.getValue() : this.mobs.getValue();
         }
-        if (entityLivingBase instanceof EntityDragon || entityLivingBase instanceof EntityWither) {
-            return !entityLivingBase.func_82150_aj() && (Boolean)this.bossees.getValue() != false;
-        }
-        if (!(entityLivingBase instanceof EntityMob) && !(entityLivingBase instanceof EntitySlime)) {
-            return (entityLivingBase instanceof EntityAnimal || entityLivingBase instanceof EntityBat || entityLivingBase instanceof EntitySquid || entityLivingBase instanceof EntityVillager) && (Boolean)this.animals.getValue() != false;
-        }
-        if (entityLivingBase instanceof EntityCreeper) {
-            return (Boolean)this.creepers.getValue();
-        }
-        if (entityLivingBase instanceof EntityEnderman) {
-            return (Boolean)this.endermans.getValue();
-        }
-        return entityLivingBase instanceof EntityBlaze ? ((Boolean)this.blazes.getValue()).booleanValue() : ((Boolean)this.mobs.getValue()).booleanValue();
     }
 
     @EventTarget
     public void onRender(Render3DEvent event) {
         if (this.isEnabled()) {
             for (Entity entity : TeamUtil.getLoadedEntitiesSorted()) {
-                String teamName;
-                if (!(entity instanceof EntityLivingBase) || !this.shouldRenderTags((EntityLivingBase)entity) || !entity.field_70158_ak && !RenderUtil.isInViewFrustum(entity.func_174813_aQ(), 10.0) || StringUtils.isBlank((CharSequence)EnumChatFormatting.func_110646_a((String)(teamName = TeamUtil.stripName(entity))))) continue;
-                double x = RenderUtil.lerpDouble(entity.field_70165_t, entity.field_70142_S, event.getPartialTicks()) - ((IAccessorRenderManager)mc.func_175598_ae()).getRenderPosX();
-                double y = RenderUtil.lerpDouble(entity.field_70163_u, entity.field_70137_T, event.getPartialTicks()) - ((IAccessorRenderManager)mc.func_175598_ae()).getRenderPosY() + (double)entity.func_70047_e();
-                double z = RenderUtil.lerpDouble(entity.field_70161_v, entity.field_70136_U, event.getPartialTicks()) - ((IAccessorRenderManager)mc.func_175598_ae()).getRenderPosZ();
-                double distance = mc.func_175606_aa().func_70032_d(entity);
-                GlStateManager.func_179094_E();
-                GlStateManager.func_179137_b((double)x, (double)(y + (entity.func_70093_af() ? 0.225 : 0.4)), (double)z);
-                GlStateManager.func_179114_b((float)(NameTags.mc.func_175598_ae().field_78735_i * -1.0f), (float)0.0f, (float)1.0f, (float)0.0f);
-                float view = NameTags.mc.field_71474_y.field_74320_O == 2 ? -1.0f : 1.0f;
-                GlStateManager.func_179114_b((float)NameTags.mc.func_175598_ae().field_78732_j, (float)view, (float)0.0f, (float)0.0f);
-                double scale = Math.pow(Math.min(Math.max((Boolean)this.autoScale.getValue() != false ? distance : 0.0, 6.0), 128.0), 0.75) * 0.0075;
-                GlStateManager.func_179139_a((double)(-scale * (double)((Float)this.scale.getValue()).floatValue()), (double)(-scale * (double)((Float)this.scale.getValue()).floatValue()), (double)1.0);
-                String distanceText = "";
-                switch ((Integer)this.distanceMode.getValue()) {
-                    case 1: {
-                        distanceText = String.format("&7%dm&r ", (int)distance);
-                        break;
-                    }
-                    case 2: {
-                        distanceText = String.format("&a[&f%d&a]&r ", (int)distance);
-                    }
-                }
-                float health = ((EntityLivingBase)entity).func_110143_aJ();
-                float absorption = ((EntityLivingBase)entity).func_110139_bj();
-                float max = ((EntityLivingBase)entity).func_110138_aP();
-                float percent = Math.min(Math.max((health + absorption) / max, 0.0f), 1.0f);
-                String healText = "";
-                switch ((Integer)this.healthMode.getValue()) {
-                    case 1: {
-                        healText = String.format(" %d%s", (int)health, absorption > 0.0f ? String.format(" &6%d&r", (int)absorption) : "&r");
-                        break;
-                    }
-                    case 2: {
-                        healText = String.format(" %s%s", healthFormatter.format((double)health / 2.0), absorption > 0.0f ? String.format(" &6%s&r", healthFormatter.format((double)absorption / 2.0)) : "&r");
-                        break;
-                    }
-                    case 3: {
-                        Score score;
-                        ScoreObjective objective;
-                        Scoreboard scoreboard;
-                        if (!(entity instanceof EntityPlayer) || (scoreboard = NameTags.mc.field_71441_e.func_96441_U()) == null || (objective = scoreboard.func_96539_a(2)) == null || (score = scoreboard.func_96529_a(entity.func_70005_c_(), objective)) == null) break;
-                        healText = String.format(" &e%d&r", score.func_96652_c());
-                    }
-                }
-                String color = ChatColors.formatColor(String.format("%s&f%s&r%s", distanceText, teamName, healText));
-                int width = NameTags.mc.field_71466_p.func_78256_a(color);
-                if ((Integer)this.backgroundOpacity.getValue() > 0) {
-                    Color textColor = !entity.func_70093_af() && !entity.func_82150_aj() ? new Color(0.0f, 0.0f, 0.0f, (float)((Integer)this.backgroundOpacity.getValue()).intValue() / 100.0f) : new Color(0.33f, 0.0f, 0.33f, (float)((Integer)this.backgroundOpacity.getValue()).intValue() / 100.0f);
-                    RenderUtil.enableRenderState();
-                    RenderUtil.drawRect((float)(-width) / 2.0f - 1.0f, (float)(-NameTags.mc.field_71466_p.field_78288_b) - 1.0f, (float)width / 2.0f + ((Boolean)this.shadow.getValue() != false ? 1.0f : 0.0f), (Boolean)this.shadow.getValue() != false ? 0.0f : -1.0f, textColor.getRGB());
-                    RenderUtil.disableRenderState();
-                }
-                GlStateManager.func_179097_i();
-                NameTags.mc.field_71466_p.func_175065_a(color, (float)(-width) / 2.0f, (float)(-NameTags.mc.field_71466_p.field_78288_b), ColorUtil.getHealthBlend(percent).getRGB(), ((Boolean)this.shadow.getValue()).booleanValue());
-                GlStateManager.func_179126_j();
-                if (entity instanceof EntityPlayer) {
-                    List effects;
-                    int offset;
-                    int height = NameTags.mc.field_71466_p.field_78288_b + 2;
-                    if (((Boolean)this.armor.getValue()).booleanValue()) {
-                        ArrayList<ItemStack> renderingItems = new ArrayList<ItemStack>();
-                        for (int i = 4; i >= 0; --i) {
-                            ItemStack itemStack = i == 0 ? ((EntityPlayer)entity).func_70694_bm() : ((EntityPlayer)entity).field_71071_by.field_70460_b[i - 1];
-                            if (itemStack == null) continue;
-                            renderingItems.add(itemStack);
+                if (entity instanceof EntityLivingBase
+                        && this.shouldRenderTags((EntityLivingBase) entity)
+                        && (entity.ignoreFrustumCheck || RenderUtil.isInViewFrustum(entity.getEntityBoundingBox(), 10.0))) {
+                    String teamName = TeamUtil.stripName(entity);
+                    if (!StringUtils.isBlank(EnumChatFormatting.getTextWithoutFormattingCodes(teamName))) {
+                        double x = RenderUtil.lerpDouble(entity.posX, entity.lastTickPosX, event.getPartialTicks())
+                                - ((IAccessorRenderManager) mc.getRenderManager()).getRenderPosX();
+                        double y = RenderUtil.lerpDouble(entity.posY, entity.lastTickPosY, event.getPartialTicks())
+                                - ((IAccessorRenderManager) mc.getRenderManager()).getRenderPosY()
+                                + (double) entity.getEyeHeight();
+                        double z = RenderUtil.lerpDouble(entity.posZ, entity.lastTickPosZ, event.getPartialTicks())
+                                - ((IAccessorRenderManager) mc.getRenderManager()).getRenderPosZ();
+                        double distance = mc.getRenderViewEntity().getDistanceToEntity(entity);
+                        GlStateManager.pushMatrix();
+                        GlStateManager.translate(x, y + (entity.isSneaking() ? 0.225 : 0.4), z);
+                        GlStateManager.rotate(mc.getRenderManager().playerViewY * -1.0F, 0.0F, 1.0F, 0.0F);
+                        float view = mc.gameSettings.thirdPersonView == 2 ? -1.0F : 1.0F;
+                        GlStateManager.rotate(mc.getRenderManager().playerViewX, view, 0.0F, 0.0F);
+                        double scale = Math.pow(Math.min(Math.max(this.autoScale.getValue() ? distance : 0.0, 6.0), 128.0), 0.75) * 0.0075;
+                        GlStateManager.scale(-scale * (double) this.scale.getValue(), -scale * (double) this.scale.getValue(), 1.0);
+                        String distanceText = "";
+                        switch (this.distanceMode.getValue()) {
+                            case 1:
+                                distanceText = String.format("&7%dm&r ", (int) distance);
+                                break;
+                            case 2:
+                                distanceText = String.format("&a[&f%d&a]&r ", (int) distance);
                         }
-                        if (!renderingItems.isEmpty()) {
-                            offset = renderingItems.size() * -8;
-                            for (int i = 0; i < renderingItems.size(); ++i) {
-                                RenderUtil.renderItemInGUI((ItemStack)renderingItems.get(i), offset + i * 16, -height - 16);
+                        float health = ((EntityLivingBase) entity).getHealth();
+                        float absorption = ((EntityLivingBase) entity).getAbsorptionAmount();
+                        float max = ((EntityLivingBase) entity).getMaxHealth();
+                        float percent = Math.min(Math.max((health + absorption) / max, 0.0F), 1.0F);
+                        String healText = "";
+                        switch (this.healthMode.getValue()) {
+                            case 1:
+                                healText = String.format(" %d%s", (int) health, absorption > 0.0F ? String.format(" &6%d&r", (int) absorption) : "&r");
+                                break;
+                            case 2:
+                                healText = String.format(
+                                        " %s%s",
+                                        healthFormatter.format((double) health / 2.0),
+                                        absorption > 0.0F ? String.format(" &6%s&r", healthFormatter.format((double) absorption / 2.0)) : "&r"
+                                );
+                                break;
+                            case 3:
+                                if (entity instanceof EntityPlayer) {
+                                    Scoreboard scoreboard = mc.theWorld.getScoreboard();
+                                    if (scoreboard != null) {
+                                        ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(2);
+                                        if (objective != null) {
+                                            Score score = scoreboard.getValueFromObjective(entity.getName(), objective);
+                                            if (score != null) {
+                                                healText = String.format(" &e%d&r", score.getScorePoints());
+                                            }
+                                        }
+                                    }
+                                }
+                        }
+                        String color = ChatColors.formatColor(String.format("%s&f%s&r%s", distanceText, teamName, healText));
+                        int width = mc.fontRendererObj.getStringWidth(color);
+                        if (this.backgroundOpacity.getValue() > 0) {
+                            Color textColor = !entity.isSneaking() && !entity.isInvisible()
+                                    ? new Color(0.0F, 0.0F, 0.0F, (float) this.backgroundOpacity.getValue() / 100.0F)
+                                    : new Color(0.33F, 0.0F, 0.33F, (float) this.backgroundOpacity.getValue() / 100.0F);
+                            RenderUtil.enableRenderState();
+                            RenderUtil.drawRect(
+                                    (float) (-width) / 2.0F - 1.0F,
+                                    (float) (-mc.fontRendererObj.FONT_HEIGHT) - 1.0F,
+                                    (float) width / 2.0F + (this.shadow.getValue() ? 1.0F : 0.0F),
+                                    this.shadow.getValue() ? 0.0F : -1.0F,
+                                    textColor.getRGB()
+                            );
+                            RenderUtil.disableRenderState();
+                        }
+                        GlStateManager.disableDepth();
+                        mc.fontRendererObj
+                                .drawString(
+                                        color,
+                                        (float) (-width) / 2.0F,
+                                        (float) (-mc.fontRendererObj.FONT_HEIGHT),
+                                        ColorUtil.getHealthBlend(percent).getRGB(),
+                                        this.shadow.getValue()
+                                );
+                        GlStateManager.enableDepth();
+                        if (entity instanceof EntityPlayer) {
+                            int height = mc.fontRendererObj.FONT_HEIGHT + 2;
+                            if (this.armor.getValue()) {
+                                ArrayList<ItemStack> renderingItems = new ArrayList<>();
+                                for (int i = 4; i >= 0; i--) {
+                                    ItemStack itemStack;
+                                    if (i == 0) {
+                                        itemStack = ((EntityPlayer) entity).getHeldItem();
+                                    } else {
+                                        itemStack = ((EntityPlayer) entity).inventory.armorInventory[i - 1];
+                                    }
+                                    if (itemStack != null) {
+                                        renderingItems.add(itemStack);
+                                    }
+                                }
+                                if (!renderingItems.isEmpty()) {
+                                    int offset = renderingItems.size() * -8;
+                                    for (int i = 0; i < renderingItems.size(); i++) {
+                                        RenderUtil.renderItemInGUI(renderingItems.get(i), offset + i * 16, -height - 16);
+                                    }
+                                    height += 16;
+                                }
                             }
-                            height += 16;
+                            if (this.effects.getValue()) {
+                                List<PotionEffect> effects = ((EntityPlayer) entity)
+                                        .getActivePotionEffects()
+                                        .stream()
+                                        .filter(potionEffect -> Potion.potionTypes[potionEffect.getPotionID()].hasStatusIcon())
+                                        .collect(Collectors.toList());
+                                if (!effects.isEmpty()) {
+                                    GlStateManager.pushMatrix();
+                                    GlStateManager.scale(0.5F, 0.5F, 1.0F);
+                                    int offset = effects.size() * -9;
+                                    for (int i = 0; i < effects.size(); i++) {
+                                        RenderUtil.renderPotionEffect(effects.get(i), offset + i * 18, -(height * 2) - 18);
+                                    }
+                                    GlStateManager.popMatrix();
+                                }
+                            }
+                            if (TeamUtil.isFriend((EntityPlayer) entity)) {
+                                RenderUtil.enableRenderState();
+                                float x1 = (float) (-width) / 2.0F - 1.0F;
+                                view = (float) (-mc.fontRendererObj.FONT_HEIGHT) - 1.0F;
+                                float y1 = (float) width / 2.0F + 1.0F;
+                                float offset = this.shadow.getValue() ? 0.0F : -1.0F;
+                                int friendColor = Myau.friendManager.getColor().getRGB();
+                                RenderUtil.drawOutlineRect(x1, view, y1, offset, 1.5F, 0, friendColor);
+                                RenderUtil.disableRenderState();
+                            } else if (TeamUtil.isTarget((EntityPlayer) entity)) {
+                                RenderUtil.enableRenderState();
+                                float x1 = (float) (-width) / 2.0F - 1.0F;
+                                view = (float) (-mc.fontRendererObj.FONT_HEIGHT) - 1.0F;
+                                float y1 = (float) width / 2.0F + 1.0F;
+                                float offset = this.shadow.getValue() ? 0.0F : -1.0F;
+                                int targetColor = Myau.targetManager.getColor().getRGB();
+                                RenderUtil.drawOutlineRect(x1, view, y1, offset, 1.5F, 0, targetColor);
+                                RenderUtil.disableRenderState();
+                            }
                         }
-                    }
-                    if (((Boolean)this.effects.getValue()).booleanValue() && !(effects = ((EntityPlayer)entity).func_70651_bq().stream().filter(potionEffect -> Potion.field_76425_a[potionEffect.func_76456_a()].func_76400_d()).collect(Collectors.toList())).isEmpty()) {
-                        GlStateManager.func_179094_E();
-                        GlStateManager.func_179152_a((float)0.5f, (float)0.5f, (float)1.0f);
-                        offset = effects.size() * -9;
-                        for (int i = 0; i < effects.size(); ++i) {
-                            RenderUtil.renderPotionEffect((PotionEffect)effects.get(i), offset + i * 18, -(height * 2) - 18);
-                        }
-                        GlStateManager.func_179121_F();
-                    }
-                    if (TeamUtil.isFriend((EntityPlayer)entity)) {
-                        RenderUtil.enableRenderState();
-                        float x1 = (float)(-width) / 2.0f - 1.0f;
-                        view = (float)(-NameTags.mc.field_71466_p.field_78288_b) - 1.0f;
-                        float y1 = (float)width / 2.0f + 1.0f;
-                        float offset2 = (Boolean)this.shadow.getValue() != false ? 0.0f : -1.0f;
-                        int friendColor = Myau.friendManager.getColor().getRGB();
-                        RenderUtil.drawOutlineRect(x1, view, y1, offset2, 1.5f, 0, friendColor);
-                        RenderUtil.disableRenderState();
-                    } else if (TeamUtil.isTarget((EntityPlayer)entity)) {
-                        RenderUtil.enableRenderState();
-                        float x1 = (float)(-width) / 2.0f - 1.0f;
-                        view = (float)(-NameTags.mc.field_71466_p.field_78288_b) - 1.0f;
-                        float y1 = (float)width / 2.0f + 1.0f;
-                        float offset3 = (Boolean)this.shadow.getValue() != false ? 0.0f : -1.0f;
-                        int targetColor = Myau.targetManager.getColor().getRGB();
-                        RenderUtil.drawOutlineRect(x1, view, y1, offset3, 1.5f, 0, targetColor);
-                        RenderUtil.disableRenderState();
+                        GlStateManager.popMatrix();
                     }
                 }
-                GlStateManager.func_179121_F();
             }
         }
     }
 }
-

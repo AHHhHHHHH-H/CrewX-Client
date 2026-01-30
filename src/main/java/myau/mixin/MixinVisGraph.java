@@ -1,12 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.renderer.chunk.SetVisibility
- *  net.minecraft.client.renderer.chunk.VisGraph
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- */
 package myau.mixin;
 
 import myau.Myau;
@@ -23,23 +14,38 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@SideOnly(value=Side.CLIENT)
-@Mixin(value={VisGraph.class}, priority=9999)
+@SideOnly(Side.CLIENT)
+@Mixin(value = {VisGraph.class}, priority = 9999)
 public abstract class MixinVisGraph {
-    @Inject(method={"func_178606_a"}, at={@At(value="HEAD")}, cancellable=true)
+    @Inject(
+            method = {"func_178606_a"},
+            at = {@At("HEAD")},
+            cancellable = true
+    )
     private void func_178606_a(CallbackInfo callbackInfo) {
-        if (Myau.moduleManager != null && (Myau.moduleManager.modules.get(Chams.class).isEnabled() || Myau.moduleManager.modules.get(ViewClip.class).isEnabled() || Myau.moduleManager.modules.get(Xray.class).isEnabled())) {
-            callbackInfo.cancel();
+        if (Myau.moduleManager != null) {
+            if (Myau.moduleManager.modules.get(Chams.class).isEnabled()
+                    || Myau.moduleManager.modules.get(ViewClip.class).isEnabled()
+                    || Myau.moduleManager.modules.get(Xray.class).isEnabled()) {
+                callbackInfo.cancel();
+            }
         }
     }
 
-    @Inject(method={"computeVisibility"}, at={@At(value="HEAD")}, cancellable=true)
+    @Inject(
+            method = {"computeVisibility"},
+            at = {@At("HEAD")},
+            cancellable = true
+    )
     private void computeVisibility(CallbackInfoReturnable<SetVisibility> callbackInfoReturnable) {
-        if (Myau.moduleManager != null && (Myau.moduleManager.modules.get(Chams.class).isEnabled() || Myau.moduleManager.modules.get(ViewClip.class).isEnabled() || Myau.moduleManager.modules.get(Xray.class).isEnabled())) {
-            SetVisibility setVisibility = new SetVisibility();
-            setVisibility.func_178618_a(true);
-            callbackInfoReturnable.setReturnValue(setVisibility);
+        if (Myau.moduleManager != null) {
+            if (Myau.moduleManager.modules.get(Chams.class).isEnabled()
+                    || Myau.moduleManager.modules.get(ViewClip.class).isEnabled()
+                    || Myau.moduleManager.modules.get(Xray.class).isEnabled()) {
+                SetVisibility setVisibility = new SetVisibility();
+                setVisibility.setAllVisible(true);
+                callbackInfoReturnable.setReturnValue(setVisibility);
+            }
         }
     }
 }
-

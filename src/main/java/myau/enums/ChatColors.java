@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.enums;
 
 public enum ChatColors {
@@ -26,16 +23,16 @@ public enum ChatColors {
     UNDERLINE('n', 0),
     ITALIC('o', 0),
     RESET('r', 0);
-
     private final String colorCodes;
     private final int rgb;
-    public static final char COLOR_CHAR = '\u00a7';
+    public static final char COLOR_CHAR = '§';
 
-    private ChatColors(char colorChar, int rgb) {
+    ChatColors(char colorChar, int rgb) {
         this.rgb = rgb;
-        this.colorCodes = new String(new char[]{'\u00a7', colorChar});
+        this.colorCodes = new String(new char[]{COLOR_CHAR, colorChar});
     }
 
+    @Override
     public String toString() {
         return this.colorCodes;
     }
@@ -48,10 +45,9 @@ public enum ChatColors {
         char[] cArray = string.toCharArray();
         for (int i = 0; i < cArray.length - 1; ++i) {
             if (cArray[i] != '&' || "0123456789AaBbCcDdEeFfKkLlMmNnOoRr".indexOf(cArray[i + 1]) <= -1) continue;
-            cArray[i] = 167;
+            cArray[i] = COLOR_CHAR;
             cArray[i + 1] = Character.toLowerCase(cArray[i + 1]);
         }
         return new String(cArray);
     }
 }
-

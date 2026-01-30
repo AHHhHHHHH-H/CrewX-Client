@@ -1,21 +1,15 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.Minecraft
- */
 package myau.module.modules;
 
-import java.util.regex.Matcher;
 import myau.enums.ChatColors;
 import myau.module.Module;
 import myau.property.properties.BooleanProperty;
 import myau.property.properties.TextProperty;
 import net.minecraft.client.Minecraft;
 
-public class NickHider
-extends Module {
-    private static final Minecraft mc = Minecraft.func_71410_x();
+import java.util.regex.Matcher;
+
+public class NickHider extends Module {
+    private static final Minecraft mc = Minecraft.getMinecraft();
     public final TextProperty protectName = new TextProperty("name", "You");
     public final BooleanProperty scoreboard = new BooleanProperty("scoreboard", true);
     public final BooleanProperty level = new BooleanProperty("level", true);
@@ -25,13 +19,15 @@ extends Module {
     }
 
     public String replaceNick(String input) {
-        if (input != null && NickHider.mc.field_71439_g != null) {
-            if (((Boolean)this.scoreboard.getValue()).booleanValue() && input.matches("\u00a77\\d{2}/\\d{2}/\\d{2}(?:\\d{2})?  ?\u00a78.*")) {
-                input = input.replaceAll("\u00a78", "\u00a78\u00a7k").replaceAll("[^\\x00-\\x7F\u00a7]", "?");
+        if (input != null && mc.thePlayer != null) {
+            if (this.scoreboard.getValue() && input.matches("§7\\d{2}/\\d{2}/\\d{2}(?:\\d{2})?  ?§8.*")) {
+                input = input.replaceAll("§8", "§8§k").replaceAll("[^\\x00-\\x7F§]", "?");
             }
-            return input.replaceAll(NickHider.mc.field_71439_g.func_70005_c_(), Matcher.quoteReplacement(ChatColors.formatColor((String)this.protectName.getValue())));
+            return input.replaceAll(
+                    mc.thePlayer.getName(), Matcher.quoteReplacement(ChatColors.formatColor(this.protectName.getValue()))
+            );
+        } else {
+            return input;
         }
-        return input;
     }
 }
-

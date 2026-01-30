@@ -1,18 +1,6 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.entity.AbstractClientPlayer
- *  net.minecraft.client.entity.EntityPlayerSP
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- */
 package myau.mixin;
 
 import myau.Myau;
-import myau.mixin.MixinEntityPlayer;
 import myau.module.modules.Sprint;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -24,18 +12,23 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@SideOnly(value=Side.CLIENT)
-@Mixin(value={AbstractClientPlayer.class}, priority=9999)
-public abstract class MixinAbstractClientPlayer
-extends MixinEntityPlayer {
-    @Redirect(method={"getFovModifier"}, at=@At(value="INVOKE", target="Lnet/minecraft/entity/ai/attributes/IAttributeInstance;getAttributeValue()D"))
+@SideOnly(Side.CLIENT)
+@Mixin(value = {AbstractClientPlayer.class}, priority = 9999)
+public abstract class MixinAbstractClientPlayer extends MixinEntityPlayer {
+    @Redirect(
+            method = {"getFovModifier"},
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/entity/ai/attributes/IAttributeInstance;getAttributeValue()D"
+            )
+    )
     private double getFovModifier(IAttributeInstance iAttributeInstance) {
-        double attributeValue = iAttributeInstance.func_111126_e();
-        if ((Entity)this instanceof EntityPlayerSP && Myau.moduleManager != null) {
-            Sprint sprint = (Sprint)Myau.moduleManager.modules.get(Sprint.class);
+        double attributeValue = iAttributeInstance.getAttributeValue();
+        if ((((Entity) (Object) this)) instanceof EntityPlayerSP && Myau.moduleManager != null) {
+            Sprint sprint = (Sprint) Myau.moduleManager.modules.get(Sprint.class);
             return sprint.isEnabled() && sprint.shouldApplyFovFix(iAttributeInstance) ? attributeValue * 1.300000011920929 : attributeValue;
+        } else {
+            return attributeValue;
         }
-        return attributeValue;
     }
 }
-

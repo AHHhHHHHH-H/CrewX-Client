@@ -1,26 +1,13 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.Minecraft
- *  net.minecraft.item.ItemBlock
- *  net.minecraft.item.ItemStack
- *  net.minecraft.item.ItemSword
- *  net.minecraft.potion.Potion
- *  net.minecraft.potion.PotionEffect
- *  net.minecraft.util.MovingObjectPosition$MovingObjectType
- */
 package myau.module.modules;
 
 import myau.Myau;
 import myau.event.EventTarget;
 import myau.event.types.EventType;
+import myau.event.types.Priority;
 import myau.events.TickEvent;
 import myau.module.Module;
-import myau.module.modules.InvWalk;
 import myau.property.properties.BooleanProperty;
 import myau.property.properties.IntProperty;
-import myau.ui.ClickGui;
 import myau.util.ItemUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemBlock;
@@ -30,9 +17,8 @@ import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.MovingObjectPosition;
 
-public class AutoAnduril
-extends Module {
-    private static final Minecraft mc = Minecraft.func_71410_x();
+public class AutoAnduril extends Module {
+    private static final Minecraft mc = Minecraft.getMinecraft();
     private int previousSlot = -1;
     private int currentSlot = -1;
     private int intervalTick = -1;
@@ -47,66 +33,63 @@ extends Module {
     }
 
     public boolean canSwap() {
-        if (AutoAnduril.mc.field_71476_x != null && AutoAnduril.mc.field_71476_x.field_72313_a == MovingObjectPosition.MovingObjectType.BLOCK && AutoAnduril.mc.field_71474_y.field_74312_F.func_151470_d()) {
-            return false;
-        }
-        ItemStack currentItem = AutoAnduril.mc.field_71439_g.field_71071_by.func_70301_a(AutoAnduril.mc.field_71439_g.field_71071_by.field_70461_c);
+        if (mc.objectMouseOver != null
+                && mc.objectMouseOver.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK
+                && mc.gameSettings.keyBindAttack.isKeyDown()) return false;
+        ItemStack currentItem = mc.thePlayer.inventory.getStackInSlot(mc.thePlayer.inventory.currentItem);
         if (currentItem != null) {
-            if (currentItem.func_77973_b() instanceof ItemBlock && AutoAnduril.mc.field_71474_y.field_74313_G.func_151470_d()) {
-                return false;
-            }
-            if (!(currentItem.func_77973_b() instanceof ItemSword) && AutoAnduril.mc.field_71439_g.func_71039_bw()) {
-                return false;
-            }
+            if (currentItem.getItem() instanceof ItemBlock && mc.gameSettings.keyBindUseItem.isKeyDown()) return false;
+            if (!(currentItem.getItem() instanceof ItemSword) && mc.thePlayer.isUsingItem()) return false;
         }
-        InvWalk invWalk = (InvWalk)Myau.moduleManager.modules.get(InvWalk.class);
-        return AutoAnduril.mc.field_71462_r == null || AutoAnduril.mc.field_71462_r instanceof ClickGui || invWalk.isEnabled() && invWalk.canInvWalk();
+        InvWalk invWalk = (InvWalk) Myau.moduleManager.modules.get(InvWalk.class);
+        return mc.currentScreen == null || mc.currentScreen instanceof myau.ui.ClickGui
+                || invWalk.isEnabled() && invWalk.canInvWalk();
     }
 
     public boolean hasSpeed() {
-        if (!((Boolean)this.speedCheck.getValue()).booleanValue()) {
-            return false;
-        }
-        PotionEffect potionEffect = AutoAnduril.mc.field_71439_g.func_70660_b(Potion.field_76424_c);
-        if (potionEffect == null) {
-            return false;
-        }
-        return potionEffect.func_76458_c() > 0;
+        if (!speedCheck.getValue()) return false;
+        PotionEffect potionEffect = mc.thePlayer.getActivePotionEffect(Potion.moveSpeed);
+        if (potionEffect == null) return false;
+        return (potionEffect.getAmplifier() > 0);
     }
 
-    @EventTarget(value=4)
+    @EventTarget(Priority.LOWEST)
     public void onTick(TickEvent event) {
         if (this.isEnabled() && event.getType() == EventType.PRE) {
-            if (this.currentSlot != -1 && this.currentSlot != AutoAnduril.mc.field_71439_g.field_71071_by.field_70461_c) {
+            if (this.currentSlot != -1 && this.currentSlot != mc.thePlayer.inventory.currentItem) {
                 this.currentSlot = -1;
                 this.previousSlot = -1;
-                this.intervalTick = (Integer)this.interval.getValue();
+                this.intervalTick = interval.getValue();
                 this.holdTick = -1;
             }
+
             if (this.intervalTick > 0) {
-                --this.intervalTick;
-            } else if (this.intervalTick == 0 && this.canSwap() && !this.hasSpeed()) {
-                int slot = ItemUtil.findAndurilHotbarSlot(AutoAnduril.mc.field_71439_g.field_71071_by.field_70461_c);
-                if ((Integer)this.debug.getValue() != 0 && slot == -1) {
-                    slot = (Integer)this.debug.getValue() - 1;
+                this.intervalTick--;
+            } else if (intervalTick == 0) {
+                if (canSwap() && !hasSpeed()) {
+                    int slot = ItemUtil.findAndurilHotbarSlot(mc.thePlayer.inventory.currentItem);
+                    if (debug.getValue() != 0 && slot == -1) slot = debug.getValue() - 1;
+                    if (slot != -1 && slot != mc.thePlayer.inventory.currentItem) {
+                        this.previousSlot = mc.thePlayer.inventory.currentItem;
+                        this.currentSlot = mc.thePlayer.inventory.currentItem = slot;
+                        this.intervalTick = -1;
+                        this.holdTick = hold.getValue();
+                        return;
+                    } else {
+                        this.intervalTick = interval.getValue();
+                        this.holdTick = -1;
+                    }
                 }
-                if (slot != -1 && slot != AutoAnduril.mc.field_71439_g.field_71071_by.field_70461_c) {
-                    this.previousSlot = AutoAnduril.mc.field_71439_g.field_71071_by.field_70461_c;
-                    this.currentSlot = AutoAnduril.mc.field_71439_g.field_71071_by.field_70461_c = slot;
-                    this.intervalTick = -1;
-                    this.holdTick = (Integer)this.hold.getValue();
-                    return;
-                }
-                this.intervalTick = (Integer)this.interval.getValue();
-                this.holdTick = -1;
             }
             if (this.holdTick > 0) {
-                --this.holdTick;
-            } else if (this.holdTick == 0 && this.previousSlot != -1 && this.canSwap()) {
-                AutoAnduril.mc.field_71439_g.field_71071_by.field_70461_c = this.previousSlot;
-                this.previousSlot = -1;
-                this.holdTick = -1;
-                this.intervalTick = (Integer)this.interval.getValue();
+                this.holdTick--;
+            } else if (holdTick == 0) {
+                if (this.previousSlot != -1 && canSwap()) {
+                    mc.thePlayer.inventory.currentItem = this.previousSlot;
+                    this.previousSlot = -1;
+                    this.holdTick = -1;
+                    this.intervalTick = interval.getValue();
+                }
             }
         }
     }
@@ -115,7 +98,7 @@ extends Module {
     public void onEnabled() {
         this.previousSlot = -1;
         this.currentSlot = -1;
-        this.intervalTick = (Integer)this.interval.getValue();
+        this.intervalTick = this.interval.getValue();
         this.holdTick = -1;
     }
 
@@ -127,4 +110,3 @@ extends Module {
         this.holdTick = -1;
     }
 }
-

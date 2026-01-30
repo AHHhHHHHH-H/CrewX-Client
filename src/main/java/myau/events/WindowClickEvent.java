@@ -1,12 +1,8 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.events;
 
 import myau.event.events.callables.EventCancellable;
 
-public class WindowClickEvent
-        extends EventCancellable {
+public class WindowClickEvent extends EventCancellable {
     private final int windowsId;
     private final int slotId;
     private final int mouseButtonClicked;
@@ -19,4 +15,3 @@ public class WindowClickEvent
         this.mode = mode;
     }
 }
-

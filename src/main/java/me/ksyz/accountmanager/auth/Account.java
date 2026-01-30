@@ -1,8 +1,11 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package me.ksyz.accountmanager.auth;
 
+/*
+ * This file is derived from https://github.com/ksyzov/AccountManager.
+ * Originally licensed under the GNU LGPL.
+ *
+ * This modified version is licensed under the GNU GPL v3.
+ */
 public class Account {
     private String refreshToken;
     private String accessToken;
@@ -30,27 +33,27 @@ public class Account {
     }
 
     public String getClientId() {
-        return this.clientId;
+        return clientId;
     }
 
     public String getScope() {
-        return this.scope;
+        return scope;
     }
 
     public String getRefreshToken() {
-        return this.refreshToken;
+        return refreshToken;
     }
 
     public String getAccessToken() {
-        return this.accessToken;
+        return accessToken;
     }
 
     public String getUsername() {
-        return this.username;
+        return username;
     }
 
     public long getUnban() {
-        return this.unban;
+        return unban;
     }
 
     public void setRefreshToken(String refreshToken) {
@@ -77,4 +80,3 @@ public class Account {
         this.scope = scope;
     }
 }
-

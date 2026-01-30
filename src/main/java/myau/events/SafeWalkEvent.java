@@ -1,12 +1,8 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.events;
 
 import myau.event.events.Event;
 
-public class SafeWalkEvent
-implements Event {
+public class SafeWalkEvent implements Event {
     private boolean safeWalk;
 
     public SafeWalkEvent(boolean safeWalk) {
@@ -21,4 +17,3 @@ implements Event {
         this.safeWalk = safeWalk;
     }
 }
-

@@ -1,15 +1,10 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.gson.JsonObject
- */
 package myau.property;
 
 import com.google.gson.JsonObject;
+import myau.module.Module;
+
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
-import myau.module.Module;
 
 public abstract class Property<T> {
     private final String name;
@@ -25,10 +20,10 @@ public abstract class Property<T> {
 
     protected Property(String name, Object value, Predicate<T> predicate, BooleanSupplier visibleChecker) {
         this.name = name;
-        this.type = value;
+        this.type = (T) value;
         this.validator = predicate;
         this.visibleChecker = visibleChecker;
-        this.value = value;
+        this.value = (T) value;
         this.owner = null;
     }
 
@@ -49,14 +44,15 @@ public abstract class Property<T> {
     public abstract String formatValue();
 
     public boolean setValue(Object object) {
-        if (this.validator != null && !this.validator.test(object)) {
+        if (this.validator != null && !this.validator.test((T) object)) {
             return false;
+        } else {
+            this.value = (T) object;
+            if (this.owner != null) {
+                this.owner.verifyValue(this.name);
+            }
+            return true;
         }
-        this.value = object;
-        if (this.owner != null) {
-            this.owner.verifyValue(this.name);
-        }
-        return true;
     }
 
     public void parseString() {
@@ -66,10 +62,9 @@ public abstract class Property<T> {
         this.owner = module;
     }
 
-    public abstract boolean parseString(String var1);
+    public abstract boolean parseString(String string);
 
-    public abstract boolean read(JsonObject var1);
+    public abstract boolean read(JsonObject jsonObject);
 
-    public abstract void write(JsonObject var1);
+    public abstract void write(JsonObject jsonObject);
 }
-

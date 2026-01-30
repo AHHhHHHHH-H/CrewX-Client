@@ -1,30 +1,30 @@
-[README.md](https://github.com/user-attachments/files/24921163/README.md)
-# CrewX Source Code
+# Open Myau
 
-Este repositório contém o código-fonte descompilado e organizado do projeto **CrewX**.
+![Preview](/images/image2.png)
 
-## Estrutura do Projeto
+[Myau Client](https://myau.sell.app/), for those who can’t afford it.
 
-O projeto segue a estrutura padrão Maven/Gradle:
+Based on **`Myau-250910`**, with added features and improvements not found in the original, focused on expanding and refining the original Myau client.
 
-- `src/main/java`: Contém todo o código-fonte Java separado por pacotes.
-  - `myau`: Pacote principal do cliente.
-  - `me.ksyz.accountmanager`: Gerenciador de contas integrado.
-- `src/main/resources`: Arquivos de configuração, recursos visuais e mixins.
+[![Discord](https://invidget.switchblade.xyz/yjSaTufmqU)](https://discord.gg/yjSaTufmqU)
 
-## Tecnologias Identificadas
+## Changes
 
-- **Java**: Linguagem principal.
-- **Mixin**: Utilizado para modificação de código em tempo de execução (SpongePowered).
-- **Minecraft Forge/FML**: Base para o mod.
+* Added Click GUI (ported from Raven B3 by blowsy)
+* Fixed bugs
 
-## Como usar
+If you encounter an issue or have a feature suggestion, please [create an issue](https://github.com/60124808866/OpenMyau/issues).
 
-1. Clone o repositório.
-2. Importe em sua IDE favorita (IntelliJ IDEA ou Eclipse).
-3. Certifique-se de configurar as dependências necessárias do Minecraft Forge e Mixin.
+## Building
 
----
-*Nota: Este código foi extraído de um arquivo JAR para fins de preservação e estudo.*
+```bash
+./gradlew build
+```
 
-Credits to 60124808866 for creating OpenMyau
+## Contributing
+
+You can open an issue or submit a pull request to help improve Open Myau.
+
+If you’re interested in co-developing or have questions, feel free to reach out:
+
+* Discord: `60124808866_88040`

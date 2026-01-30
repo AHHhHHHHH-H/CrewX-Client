@@ -1,14 +1,10 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.ui.dataset.impl;
 
 import myau.enums.ChatColors;
 import myau.property.properties.FloatProperty;
 import myau.ui.dataset.Slider;
 
-public class FloatSlider
-        extends Slider {
+public class FloatSlider extends Slider {
     private final FloatProperty property;
 
     public FloatSlider(FloatProperty property) {
@@ -17,47 +13,45 @@ public class FloatSlider
 
     @Override
     public double getInput() {
-        return ((Float)this.property.getValue()).floatValue();
+        return property.getValue();
     }
 
     @Override
     public double getMin() {
-        return this.property.getMinimum().floatValue();
+        return property.getMinimum();
     }
 
     @Override
     public double getMax() {
-        return this.property.getMaximum().floatValue();
+        return property.getMaximum();
     }
 
     @Override
     public void setValue(double value) {
-        this.property.setValue(Float.valueOf(new Double(value).floatValue()));
+        property.setValue(new Double(value).floatValue());
     }
 
     @Override
     public void setValueString(String value) {
         try {
-            this.property.setValue(Float.valueOf(Float.parseFloat(value)));
-        }
-        catch (Exception exception) {
-            // empty catch block
+            property.setValue(Float.parseFloat(value));
+        } catch (Exception ignore) {
         }
     }
 
     @Override
     public String getName() {
-        return this.property.getName().replace("-", " ");
+        return property.getName().replace("-", " ");
     }
 
     @Override
     public String getValueString() {
-        return ((Float)this.property.getValue()).toString();
+        return property.getValue().toString();
     }
 
     @Override
     public String getValueColorString() {
-        return ChatColors.formatColor(this.property.formatValue());
+        return ChatColors.formatColor(property.formatValue());
     }
 
     @Override
@@ -67,22 +61,17 @@ public class FloatSlider
 
     @Override
     public boolean isVisible() {
-        return this.property.isVisible();
+        return property.isVisible();
     }
 
     @Override
     public void stepping(boolean increment) {
         if (increment) {
-            if (((Float)this.property.getValue()).floatValue() >= this.property.getMaximum().floatValue()) {
-                return;
-            }
-            this.property.setValue(Float.valueOf((float)Math.round(((Float)this.property.getValue()).floatValue() * 10.0f + 1.0f) / 10.0f));
+            if (property.getValue() >= property.getMaximum()) return;
+            property.setValue(Math.round(property.getValue() * 10 + 1) / 10.0F);
         } else {
-            if (((Float)this.property.getValue()).floatValue() <= this.property.getMinimum().floatValue()) {
-                return;
-            }
-            this.property.setValue(Float.valueOf((float)Math.round(((Float)this.property.getValue()).floatValue() * 10.0f - 1.0f) / 10.0f));
+            if (property.getValue() <= property.getMinimum()) return;
+            property.setValue(Math.round(property.getValue() * 10 - 1) / 10.0F);
         }
     }
 }
-

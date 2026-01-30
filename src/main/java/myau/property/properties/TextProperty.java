@@ -1,17 +1,11 @@
-/*
- * Decompiled with CFR 0.152.
- *
- * Could not load the following classes:
- *  com.google.gson.JsonObject
- */
 package myau.property.properties;
 
 import com.google.gson.JsonObject;
-import java.util.function.BooleanSupplier;
 import myau.property.Property;
 
-public class TextProperty
-        extends Property<String> {
+import java.util.function.BooleanSupplier;
+
+public class TextProperty extends Property<String> {
     public TextProperty(String name, String value) {
         this(name, value, null);
     }
@@ -42,7 +36,6 @@ public class TextProperty
 
     @Override
     public void write(JsonObject jsonObject) {
-        jsonObject.addProperty(this.getName(), (String)this.getValue());
+        jsonObject.addProperty(this.getName(), this.getValue());
     }
 }
-

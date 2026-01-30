@@ -1,12 +1,8 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.module.modules;
 
 import myau.module.Module;
 
-public class AntiObfuscate
-extends Module {
+public class AntiObfuscate extends Module {
     public AntiObfuscate() {
         super("AntiObfuscate", false, true);
     }
@@ -15,7 +11,6 @@ extends Module {
         if (input == null) {
             return null;
         }
-        return input.replaceAll("\u00a7k", "");
+        return input.replaceAll("§k", "");
     }
 }
-

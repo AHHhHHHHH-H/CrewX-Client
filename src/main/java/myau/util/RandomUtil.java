@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.util;
 
 import java.util.Random;
@@ -9,7 +6,7 @@ public class RandomUtil {
     private static final Random theRandom = new Random();
 
     public static long nextLong(long min, long max) {
-        return (long)RandomUtil.nextDouble(min, max + 1L);
+        return (long) nextDouble((double) min, (double) (max + 1L));
     }
 
     public static float nextFloat(float min, float max) {
@@ -20,4 +17,3 @@ public class RandomUtil {
         return theRandom.nextDouble() * (max - min) + min;
     }
 }
-

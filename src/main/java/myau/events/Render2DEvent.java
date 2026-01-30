@@ -1,12 +1,8 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.events;
 
 import myau.event.events.Event;
 
-public class Render2DEvent
-implements Event {
+public class Render2DEvent implements Event {
     private final float partialTicks;
 
     public Render2DEvent(float float1) {
@@ -17,4 +13,3 @@ implements Event {
         return this.partialTicks;
     }
 }
-

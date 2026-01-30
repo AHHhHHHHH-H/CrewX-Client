@@ -1,18 +1,20 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.event;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import myau.event.types.Priority;
 
+import java.lang.annotation.*;
+
+/**
+ * Marks a method so that the EventManager knows that it should be registered.
+ * The priority of the method is also set with this.
+ *
+ * @author DarkMagician6
+ * @see Priority
+ * @since July 30, 2013
+ */
 @Documented
-@Target(value={ElementType.METHOD})
-@Retention(value=RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface EventTarget {
-    public byte value() default 2;
+    byte value() default Priority.MEDIUM;
 }
-

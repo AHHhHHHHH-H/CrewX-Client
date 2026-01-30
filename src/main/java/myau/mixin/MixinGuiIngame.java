@@ -1,16 +1,7 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.gui.GuiIngame
- *  net.minecraft.entity.player.InventoryPlayer
- *  net.minecraft.item.ItemStack
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- */
 package myau.mixin;
 
 import myau.Myau;
+import myau.module.modules.AutoBlockIn;
 import myau.module.modules.Scaffold;
 import net.minecraft.client.gui.GuiIngame;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -21,17 +12,31 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@SideOnly(value=Side.CLIENT)
-@Mixin(value={GuiIngame.class}, priority=9999)
+@SideOnly(Side.CLIENT)
+@Mixin(value = {GuiIngame.class}, priority = 9999)
 public abstract class MixinGuiIngame {
-    @Redirect(method={"updateTick"}, at=@At(value="INVOKE", target="Lnet/minecraft/entity/player/InventoryPlayer;getCurrentItem()Lnet/minecraft/item/ItemStack;"))
+    @Redirect(
+            method = {"updateTick"},
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/entity/player/InventoryPlayer;getCurrentItem()Lnet/minecraft/item/ItemStack;"
+            )
+    )
     private ItemStack updateTick(InventoryPlayer inventoryPlayer) {
-        int slot;
-        Scaffold scaffold = (Scaffold)Myau.moduleManager.modules.get(Scaffold.class);
-        if (scaffold.isEnabled() && ((Boolean)scaffold.itemSpoof.getValue()).booleanValue() && (slot = scaffold.getSlot()) >= 0) {
-            return inventoryPlayer.func_70301_a(slot);
+        Scaffold scaffold = (Scaffold) Myau.moduleManager.modules.get(Scaffold.class);
+        if (scaffold.isEnabled() && scaffold.itemSpoof.getValue()) {
+            int slot = scaffold.getSlot();
+            if (slot >= 0) {
+                return inventoryPlayer.getStackInSlot(slot);
+            }
         }
-        return inventoryPlayer.func_70448_g();
+        AutoBlockIn autoBlockIn = (AutoBlockIn) Myau.moduleManager.modules.get(AutoBlockIn.class);
+        if(autoBlockIn.itemSpoof.getValue() && autoBlockIn.isEnabled()){
+            int slot = autoBlockIn.getSlot();
+            if (slot >= 0) {
+                return inventoryPlayer.getStackInSlot(slot);
+            }
+        }
+        return inventoryPlayer.getCurrentItem();
     }
 }
-

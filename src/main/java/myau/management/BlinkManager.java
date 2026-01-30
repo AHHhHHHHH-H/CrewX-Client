@@ -1,23 +1,5 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.Minecraft
- *  net.minecraft.network.Packet
- *  net.minecraft.network.handshake.client.C00Handshake
- *  net.minecraft.network.login.client.C00PacketLoginStart
- *  net.minecraft.network.login.client.C01PacketEncryptionResponse
- *  net.minecraft.network.play.client.C00PacketKeepAlive
- *  net.minecraft.network.play.client.C01PacketChatMessage
- *  net.minecraft.network.play.client.C03PacketPlayer
- *  net.minecraft.network.play.client.C0FPacketConfirmTransaction
- *  net.minecraft.network.status.client.C00PacketServerQuery
- *  net.minecraft.network.status.client.C01PacketPing
- */
 package myau.management;
 
-import java.util.Deque;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import myau.enums.BlinkModules;
 import myau.event.EventTarget;
 import myau.event.types.EventType;
@@ -36,21 +18,24 @@ import net.minecraft.network.play.client.C0FPacketConfirmTransaction;
 import net.minecraft.network.status.client.C00PacketServerQuery;
 import net.minecraft.network.status.client.C01PacketPing;
 
+import java.util.Deque;
+import java.util.concurrent.ConcurrentLinkedDeque;
+
 public class BlinkManager {
-    public static Minecraft mc = Minecraft.func_71410_x();
+    public static Minecraft mc = Minecraft.getMinecraft();
     public BlinkModules blinkModule = BlinkModules.NONE;
     public boolean blinking = false;
-    public Deque<Packet<?>> blinkedPackets = new ConcurrentLinkedDeque();
+    public Deque<Packet<?>> blinkedPackets = new ConcurrentLinkedDeque<>();
 
     public boolean offerPacket(Packet<?> packet) {
         if (this.blinkModule == BlinkModules.NONE || packet instanceof C00PacketKeepAlive || packet instanceof C01PacketChatMessage) {
             return false;
-        }
-        if (this.blinkedPackets.isEmpty() && packet instanceof C0FPacketConfirmTransaction) {
+        } else if (this.blinkedPackets.isEmpty() && packet instanceof C0FPacketConfirmTransaction) {
             return false;
+        } else {
+            this.blinkedPackets.offer(packet);
+            return true;
         }
-        this.blinkedPackets.offer(packet);
-        return true;
     }
 
     public boolean setBlinkState(boolean state, BlinkModules module) {
@@ -61,14 +46,14 @@ public class BlinkManager {
             this.blinkModule = module;
             this.blinking = true;
         } else {
-            if (this.blinkModule != module) {
+            if(blinkModule != module){
                 return false;
             }
             this.blinking = false;
-            if (Minecraft.func_71410_x().func_147114_u() != null && this.blinkedPackets.isEmpty()) {
+            if (Minecraft.getMinecraft().getNetHandler() != null && this.blinkedPackets.isEmpty()) {
                 return true;
             }
-            for (Packet<?> blinkedPacket : this.blinkedPackets) {
+            for (Packet<?> blinkedPacket : blinkedPackets) {
                 PacketUtil.sendPacketNoEvent(blinkedPacket);
             }
             this.blinkedPackets.clear();
@@ -86,21 +71,26 @@ public class BlinkManager {
     }
 
     public boolean isBlinking() {
-        return this.blinking;
+        return blinking;
     }
 
     @EventTarget
     public void onPacket(PacketEvent event) {
-        if (event.getPacket() instanceof C00Handshake || event.getPacket() instanceof C00PacketLoginStart || event.getPacket() instanceof C00PacketServerQuery || event.getPacket() instanceof C01PacketPing || event.getPacket() instanceof C01PacketEncryptionResponse) {
+        if (event.getPacket() instanceof C00Handshake
+                || event.getPacket() instanceof C00PacketLoginStart
+                || event.getPacket() instanceof C00PacketServerQuery
+                || event.getPacket() instanceof C01PacketPing
+                || event.getPacket() instanceof C01PacketEncryptionResponse) {
             this.setBlinkState(false, this.blinkModule);
         }
     }
 
     @EventTarget
     public void onTick(TickEvent event) {
-        if (event.getType() == EventType.POST && BlinkManager.mc.field_71439_g.field_70128_L) {
-            this.setBlinkState(false, this.blinkModule);
+        if (event.getType() == EventType.POST) {
+            if (mc.thePlayer.isDead) {
+                this.setBlinkState(false, this.blinkModule);
+            }
         }
     }
 }
-

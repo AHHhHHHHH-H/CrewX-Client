@@ -1,17 +1,11 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.gson.JsonObject
- */
 package myau.property.properties;
 
 import com.google.gson.JsonObject;
-import java.util.function.BooleanSupplier;
 import myau.property.Property;
 
-public class BooleanProperty
-extends Property<Boolean> {
+import java.util.function.BooleanSupplier;
+
+public class BooleanProperty extends Property<Boolean> {
     public BooleanProperty(String name, Boolean value) {
         this(name, value, null);
     }
@@ -27,18 +21,18 @@ extends Property<Boolean> {
 
     @Override
     public String formatValue() {
-        return (Boolean)this.getValue() != false ? "&atrue" : "&cfalse";
+        return this.getValue() ? "&atrue" : "&cfalse";
     }
 
     @Override
     public boolean parseString(String string) {
         if (string == null) {
-            return this.setValue((Boolean)this.getValue() == false);
-        }
-        if (string.equalsIgnoreCase("true") || string.equalsIgnoreCase("on") || string.equalsIgnoreCase("1")) {
+            return this.setValue(!(Boolean) this.getValue());
+        } else if (string.equalsIgnoreCase("true") || string.equalsIgnoreCase("on") || string.equalsIgnoreCase("1")) {
             return this.setValue(true);
+        } else {
+            return (string.equalsIgnoreCase("false") || string.equalsIgnoreCase("off") || string.equalsIgnoreCase("0")) && this.setValue(false);
         }
-        return (string.equalsIgnoreCase("false") || string.equalsIgnoreCase("off") || string.equalsIgnoreCase("0")) && this.setValue(false);
     }
 
     @Override
@@ -48,7 +42,6 @@ extends Property<Boolean> {
 
     @Override
     public void write(JsonObject jsonObject) {
-        jsonObject.addProperty(this.getName(), (Boolean)this.getValue());
+        jsonObject.addProperty(this.getName(), this.getValue());
     }
 }
-

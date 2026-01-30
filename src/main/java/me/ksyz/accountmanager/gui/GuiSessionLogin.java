@@ -1,26 +1,7 @@
-/*
- * Decompiled with CFR 0.152.
- *
- * Could not load the following classes:
- *  com.google.gson.JsonObject
- *  com.google.gson.JsonParser
- *  net.minecraft.client.gui.GuiButton
- *  net.minecraft.client.gui.GuiScreen
- *  net.minecraft.client.gui.GuiTextField
- *  net.minecraft.client.gui.ScaledResolution
- *  net.minecraft.util.Session
- *  org.apache.commons.io.IOUtils
- *  org.lwjgl.input.Keyboard
- */
 package me.ksyz.accountmanager.gui;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import java.awt.Color;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import me.ksyz.accountmanager.auth.SessionManager;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
@@ -30,9 +11,20 @@ import net.minecraft.util.Session;
 import org.apache.commons.io.IOUtils;
 import org.lwjgl.input.Keyboard;
 
-public class GuiSessionLogin
-        extends GuiScreen {
+import java.awt.*;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+/*
+ * This file is derived from https://github.com/ksyzov/AccountManager.
+ * Originally licensed under the GNU LGPL.
+ *
+ * This modified version is licensed under the GNU GPL v3.
+ */
+public class GuiSessionLogin extends GuiScreen {
     private GuiScreen previousScreen;
+
     private String status = "Session Login";
     private GuiTextField sessionField;
     private ScaledResolution sr;
@@ -41,74 +33,87 @@ public class GuiSessionLogin
         this.previousScreen = previousScreen;
     }
 
-    public void func_73866_w_() {
-        Keyboard.enableRepeatEvents((boolean)true);
-        this.sr = new ScaledResolution(this.field_146297_k);
-        this.sessionField = new GuiTextField(1, this.field_146297_k.field_71466_p, this.sr.func_78326_a() / 2 - 100, this.sr.func_78328_b() / 2, 200, 20);
-        this.sessionField.func_146203_f(Short.MAX_VALUE);
-        this.sessionField.func_146195_b(true);
-        this.field_146292_n.add(new GuiButton(998, this.sr.func_78326_a() / 2 - 100, this.sr.func_78328_b() / 2 + 30, 200, 20, "Login"));
-        super.func_73866_w_();
+    @Override
+    public void initGui() {
+        Keyboard.enableRepeatEvents(true);
+        sr = new ScaledResolution(mc);
+
+        sessionField = new GuiTextField(1, mc.fontRendererObj,sr.getScaledWidth() / 2 - 100, sr.getScaledHeight() / 2, 200, 20);
+        sessionField.setMaxStringLength(32767);
+        sessionField.setFocused(true);
+
+        buttonList.add(new GuiButton(998, sr.getScaledWidth() / 2 - 100, sr.getScaledHeight() / 2 + 30, 200, 20, "Login"));
+
+        super.initGui();
     }
 
-    public void func_146281_b() {
-        Keyboard.enableRepeatEvents((boolean)false);
-        super.func_146281_b();
+    @Override
+    public void onGuiClosed() {
+        Keyboard.enableRepeatEvents(false);
+
+        super.onGuiClosed();
     }
 
-    public void func_73863_a(int mouseX, int mouseY, float partialTicks) {
-        this.func_146276_q_();
-        this.field_146297_k.field_71466_p.func_78276_b(this.status, this.sr.func_78326_a() / 2 - this.field_146297_k.field_71466_p.func_78256_a(this.status) / 2, this.sr.func_78328_b() / 2 - 30, Color.WHITE.getRGB());
-        this.sessionField.func_146194_f();
-        super.func_73863_a(mouseX, mouseY, partialTicks);
+    @Override
+    public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        drawDefaultBackground();
+
+        mc.fontRendererObj.drawString(status, sr.getScaledWidth() / 2 - mc.fontRendererObj.getStringWidth(status) / 2, sr.getScaledHeight() / 2 - 30, Color.WHITE.getRGB());
+        sessionField.drawTextBox();
+
+        super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
-    protected void func_146284_a(GuiButton button) throws IOException {
-        if (button.field_146127_k == 998) {
+    @Override
+    protected void actionPerformed(GuiButton button) throws IOException {
+        //login button
+        if (button.id == 998) {
             try {
-                String token;
-                String uuid;
-                String username;
-                String session = this.sessionField.func_146179_b();
-                if (session.contains(":")) {
+                String username, uuid, token, session = sessionField.getText();
+
+                if (session.contains(":")) { //if fully formatted string (ign:uuid:token)
+                    //split string to data
                     username = session.split(":")[0];
                     uuid = session.split(":")[1];
                     token = session.split(":")[2];
-                } else {
-                    HttpURLConnection c = (HttpURLConnection)new URL("https://api.minecraftservices.com/minecraft/profile/").openConnection();
+                } else { //if only token
+                    //make request
+                    HttpURLConnection c = (HttpURLConnection) new URL("https://api.minecraftservices.com/minecraft/profile/").openConnection();
                     c.setRequestProperty("Content-type", "application/json");
-                    c.setRequestProperty("Authorization", "Bearer " + this.sessionField.func_146179_b());
+                    c.setRequestProperty("Authorization", "Bearer " + sessionField.getText());
                     c.setDoOutput(true);
-                    JsonObject json = new JsonParser().parse(IOUtils.toString((InputStream)c.getInputStream())).getAsJsonObject();
+
+                    //get json
+                    JsonObject json = new JsonParser().parse(IOUtils.toString(c.getInputStream())).getAsJsonObject();
+
+                    //get data
                     username = json.get("name").getAsString();
                     uuid = json.get("id").getAsString();
                     token = session;
                 }
+
                 SessionManager.set(new Session(username, uuid, token, "mojang"));
-                this.field_146297_k.func_147108_a(this.previousScreen);
-            }
-            catch (IOException IOException2) {
-                if (IOException2.getMessage().contains("401")) {
-                    this.status = "\u00a7cError: Invalid session.";
-                } else {
-                    IOException2.printStackTrace();
+                mc.displayGuiScreen(previousScreen);
+            } catch (IOException IOException){
+                if(IOException.getMessage().contains("401")){
+                    status = "§cError: Invalid session.";
+                }  else {
+                    IOException.printStackTrace();
                 }
-            }
-            catch (Exception e) {
-                this.status = "\u00a7cError: Couldn't set session (check mc logs)";
+            } catch(Exception e) {
+                status = "§cError: Couldn't set session (check mc logs)";
                 e.printStackTrace();
             }
         }
-        super.func_146284_a(button);
+
+        super.actionPerformed(button);
     }
 
-    protected void func_73869_a(char typedChar, int keyCode) throws IOException {
-        this.sessionField.func_146201_a(typedChar, keyCode);
-        if (1 == keyCode) {
-            this.field_146297_k.func_147108_a(this.previousScreen);
-        } else {
-            super.func_73869_a(typedChar, keyCode);
-        }
+    @Override
+    protected void keyTyped(char typedChar, int keyCode) throws IOException {
+        sessionField.textboxKeyTyped(typedChar, keyCode);
+
+        if (Keyboard.KEY_ESCAPE == keyCode) mc.displayGuiScreen(previousScreen);
+        else super.keyTyped(typedChar, keyCode);
     }
 }
-

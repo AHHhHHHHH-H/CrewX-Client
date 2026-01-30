@@ -1,12 +1,8 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.events;
 
 import myau.event.events.Event;
 
-public class RaytraceEvent
-implements Event {
+public class RaytraceEvent implements Event {
     private double range;
 
     public RaytraceEvent(double range) {
@@ -21,4 +17,3 @@ implements Event {
         this.range = range;
     }
 }
-

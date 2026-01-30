@@ -1,25 +1,8 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.google.common.collect.Iterables
- *  com.mojang.authlib.GameProfile
- *  com.mojang.authlib.properties.Property
- *  net.minecraft.client.Minecraft
- *  net.minecraft.client.network.NetworkPlayerInfo
- */
 package myau.command.commands;
 
 import com.google.common.collect.Iterables;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
-import java.awt.Toolkit;
-import java.awt.datatransfer.StringSelection;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.Locale;
 import myau.Myau;
 import myau.command.Command;
 import myau.enums.ChatColors;
@@ -27,12 +10,19 @@ import myau.util.ChatUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetworkPlayerInfo;
 
-public class DenickCommand
-extends Command {
-    private static final Minecraft mc = Minecraft.func_71410_x();
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.Locale;
+
+public class DenickCommand extends Command {
+    private static final Minecraft mc = Minecraft.getMinecraft();
 
     public DenickCommand() {
-        super(new ArrayList<String>(Collections.singletonList("denick")));
+        super(new ArrayList<>(Collections.singletonList("denick")));
     }
 
     @Override
@@ -40,25 +30,44 @@ extends Command {
         if (args.size() < 2) {
             ChatUtil.sendFormatted(String.format("%sUsage: .%s <&oname&r>&r", Myau.clientName, args.get(0).toLowerCase(Locale.ROOT)));
         } else {
-            NetworkPlayerInfo playerInfo = mc.func_147114_u().func_175104_a(ChatColors.formatColor(args.get(1)));
+            NetworkPlayerInfo playerInfo = mc.getNetHandler().getPlayerInfo(ChatColors.formatColor(args.get(1)));
             if (playerInfo != null) {
-                GameProfile gameProfile = playerInfo.func_178845_a();
-                Property property = (Property)Iterables.getFirst((Iterable)gameProfile.getProperties().get((Object)"textures"), null);
+                GameProfile gameProfile = playerInfo.getGameProfile();
+                Property property = Iterables.getFirst(gameProfile.getProperties().get("textures"), null);
                 if (property != null) {
                     String code = new String(Base64.getDecoder().decode(property.getValue().getBytes(StandardCharsets.UTF_8)));
                     String name = code.contains("profileName\" : \"") ? code.split("profileName\" : \"")[1].split("\"")[0] : "?";
                     String uuid = code.contains("profileId\" : \"") ? code.split("profileId\" : \"")[1].split("\"")[0] : "?";
-                    ChatUtil.sendRaw(String.format(ChatColors.formatColor("%s%s&r -> %s (&o%s&r)&r"), ChatColors.formatColor(Myau.clientName), gameProfile.getName().replace("\u00a7", "&"), name, uuid));
+                    ChatUtil.sendRaw(
+                            String.format(
+                                    ChatColors.formatColor("%s%s&r -> %s (&o%s&r)&r"),
+                                    ChatColors.formatColor(Myau.clientName),
+                                    gameProfile.getName().replace("§", "&"),
+                                    name,
+                                    uuid
+                            )
+                    );
                     if (!uuid.isEmpty() && !uuid.equals("?")) {
                         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(uuid), null);
                     }
                 } else {
-                    ChatUtil.sendRaw(String.format(ChatColors.formatColor("%sNo textures for entity with name &o%s&r"), ChatColors.formatColor(Myau.clientName), args.get(1)));
+                    ChatUtil.sendRaw(
+                            String.format(
+                                    ChatColors.formatColor("%sNo textures for entity with name &o%s&r"),
+                                    ChatColors.formatColor(Myau.clientName),
+                                    args.get(1)
+                            )
+                    );
                 }
             } else {
-                ChatUtil.sendRaw(String.format(ChatColors.formatColor("%sNo entity with name &o%s&r"), ChatColors.formatColor(Myau.clientName), args.get(1)));
+                ChatUtil.sendRaw(
+                        String.format(
+                                ChatColors.formatColor("%sNo entity with name &o%s&r"),
+                                ChatColors.formatColor(Myau.clientName),
+                                args.get(1)
+                        )
+                );
             }
         }
     }
 }
-

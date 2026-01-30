@@ -1,6 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.util;
 
 public class TimerUtil {
@@ -22,4 +19,3 @@ public class TimerUtil {
         this.lastMS = 0L;
     }
 }
-

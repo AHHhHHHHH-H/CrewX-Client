@@ -1,12 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.block.BlockLadder
- *  net.minecraft.util.EnumWorldBlockLayer
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- */
 package myau.mixin;
 
 import myau.Myau;
@@ -20,14 +11,19 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@SideOnly(value=Side.CLIENT)
-@Mixin(value={BlockLadder.class}, priority=9999)
+@SideOnly(Side.CLIENT)
+@Mixin(value = {BlockLadder.class}, priority = 9999)
 public abstract class MixinBlockLadder {
-    @Inject(method={"getBlockLayer"}, at={@At(value="HEAD")}, cancellable=true)
+    @Inject(
+            method = {"getBlockLayer"},
+            at = {@At("HEAD")},
+            cancellable = true
+    )
     private void getBlockLayer(CallbackInfoReturnable<EnumWorldBlockLayer> callbackInfoReturnable) {
-        if (Myau.moduleManager != null && Myau.moduleManager.modules.get(Xray.class).isEnabled()) {
-            callbackInfoReturnable.setReturnValue(EnumWorldBlockLayer.TRANSLUCENT);
+        if (Myau.moduleManager != null) {
+            if (Myau.moduleManager.modules.get(Xray.class).isEnabled()) {
+                callbackInfoReturnable.setReturnValue(EnumWorldBlockLayer.TRANSLUCENT);
+            }
         }
     }
 }
-

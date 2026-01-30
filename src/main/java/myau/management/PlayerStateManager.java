@@ -1,24 +1,7 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.network.Packet
- *  net.minecraft.network.play.client.C02PacketUseEntity
- *  net.minecraft.network.play.client.C03PacketPlayer
- *  net.minecraft.network.play.client.C07PacketPlayerDigging
- *  net.minecraft.network.play.client.C08PacketPlayerBlockPlacement
- *  net.minecraft.network.play.client.C09PacketHeldItemChange
- *  net.minecraft.network.play.client.C0APacketAnimation
- */
 package myau.management;
 
 import net.minecraft.network.Packet;
-import net.minecraft.network.play.client.C02PacketUseEntity;
-import net.minecraft.network.play.client.C03PacketPlayer;
-import net.minecraft.network.play.client.C07PacketPlayerDigging;
-import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
-import net.minecraft.network.play.client.C09PacketHeldItemChange;
-import net.minecraft.network.play.client.C0APacketAnimation;
+import net.minecraft.network.play.client.*;
 
 public class PlayerStateManager {
     public boolean attacking = false;
@@ -52,4 +35,3 @@ public class PlayerStateManager {
         }
     }
 }
-

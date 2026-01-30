@@ -1,13 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.entity.EntityPlayerSP
- *  net.minecraft.entity.Entity
- *  net.minecraft.world.World
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- */
 package myau.mixin;
 
 import myau.Myau;
@@ -26,68 +16,81 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@SideOnly(value=Side.CLIENT)
-@Mixin(value={Entity.class}, priority=9999)
+@SideOnly(Side.CLIENT)
+@Mixin(value = {Entity.class}, priority = 9999)
 public abstract class MixinEntity {
     @Shadow
-    public World field_70170_p;
+    public World worldObj;
     @Shadow
-    public double field_70165_t;
+    public double posX;
     @Shadow
-    public double field_70163_u;
+    public double posY;
     @Shadow
-    public double field_70161_v;
+    public double posZ;
     @Shadow
-    public double field_70159_w;
+    public double motionX;
     @Shadow
-    public double field_70181_x;
+    public double motionY;
     @Shadow
-    public double field_70179_y;
+    public double motionZ;
     @Shadow
-    public float field_70177_z;
+    public float rotationYaw;
     @Shadow
-    public float field_70125_A;
+    public float rotationPitch;
     @Shadow
-    public float field_70126_B;
+    public float prevRotationYaw;
     @Shadow
-    public float field_70127_C;
+    public float prevRotationPitch;
     @Shadow
-    public boolean field_70122_E;
+    public boolean onGround;
 
     @Shadow
-    public boolean func_70115_ae() {
+    public boolean isRiding() {
         return false;
     }
 
-    @Inject(method={"setVelocity"}, at={@At(value="HEAD")}, cancellable=true)
+    @Inject(
+            method = {"setVelocity"},
+            at = {@At("HEAD")},
+            cancellable = true
+    )
     private void setVelocity(double double1, double double2, double double3, CallbackInfo callbackInfo) {
-        if ((Entity)this instanceof EntityPlayerSP) {
+        if ((Entity) ((Object) this) instanceof EntityPlayerSP) {
             KnockbackEvent event = new KnockbackEvent(double1, double2, double3);
             EventManager.call(event);
             if (event.isCancelled()) {
                 callbackInfo.cancel();
-                this.field_70159_w = event.getX();
-                this.field_70181_x = event.getY();
-                this.field_70179_y = event.getZ();
+                this.motionX = event.getX();
+                this.motionY = event.getY();
+                this.motionZ = event.getZ();
             }
         }
     }
 
-    @Inject(method={"setAngles"}, at={@At(value="HEAD")}, cancellable=true)
+    @Inject(
+            method = {"setAngles"},
+            at = {@At("HEAD")},
+            cancellable = true
+    )
     private void setAngles(CallbackInfo callbackInfo) {
-        if ((Entity)this instanceof EntityPlayerSP && Myau.rotationManager != null && Myau.rotationManager.isRotated()) {
+        if ((Entity) ((Object) this) instanceof EntityPlayerSP && Myau.rotationManager != null && Myau.rotationManager.isRotated()) {
             callbackInfo.cancel();
         }
     }
 
-    @ModifyVariable(method={"moveEntity"}, ordinal=0, at=@At(value="STORE"), name={"flag"})
+    @ModifyVariable(
+            method = {"moveEntity"},
+            ordinal = 0,
+            at = @At("STORE"),
+            name = {"flag"}
+    )
     private boolean moveEntity(boolean boolean1) {
-        if ((Entity)this instanceof EntityPlayerSP) {
+        if ((Entity) ((Object) this) instanceof EntityPlayerSP) {
             SafeWalkEvent event = new SafeWalkEvent(boolean1);
             EventManager.call(event);
             return event.isSafeWalk();
+        } else {
+            return boolean1;
         }
-        return boolean1;
     }
 }
-

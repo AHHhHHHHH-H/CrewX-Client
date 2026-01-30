@@ -1,12 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.Minecraft
- *  net.minecraft.client.settings.KeyBinding
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- */
 package myau.mixin;
 
 import myau.event.EventManager;
@@ -21,24 +12,29 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@SideOnly(value=Side.CLIENT)
-@Mixin(value={KeyBinding.class}, priority=9999)
+@SideOnly(Side.CLIENT)
+@Mixin(value = {KeyBinding.class}, priority = 9999)
 public abstract class MixinKeyBinding {
     @Shadow
-    private String field_74515_c;
+    private String keyDescription;
 
-    @Inject(method={"isPressed"}, at={@At(value="RETURN")}, cancellable=true)
+    @Inject(
+            method = {"isPressed"},
+            at = {@At("RETURN")},
+            cancellable = true
+    )
     private void isPressed(CallbackInfoReturnable<Boolean> callbackInfoReturnable) {
-        if (callbackInfoReturnable.getReturnValue().booleanValue()) {
-            Minecraft mc = Minecraft.func_71410_x();
-            for (int i = 0; i < 9; ++i) {
-                if (!mc.field_71474_y.field_151456_ac[i].func_151464_g().equals(this.field_74515_c)) continue;
-                SwapItemEvent event = new SwapItemEvent(i, 0);
-                EventManager.call(event);
-                if (!event.isCancelled()) continue;
-                callbackInfoReturnable.setReturnValue(false);
+        if (callbackInfoReturnable.getReturnValue()) {
+            Minecraft mc = Minecraft.getMinecraft();
+            for (int i = 0; i < 9; i++) {
+                if (mc.gameSettings.keyBindsHotbar[i].getKeyDescription().equals(this.keyDescription)) {
+                    SwapItemEvent event = new SwapItemEvent(i, 0);
+                    EventManager.call(event);
+                    if (event.isCancelled()) {
+                        callbackInfoReturnable.setReturnValue(false);
+                    }
+                }
             }
         }
     }
 }
-

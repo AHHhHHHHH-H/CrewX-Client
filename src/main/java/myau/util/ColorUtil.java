@@ -1,9 +1,6 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.util;
 
-import java.awt.Color;
+import java.awt.*;
 
 public class ColorUtil {
     public static final Color RED = new Color(255, 0, 0);
@@ -17,7 +14,7 @@ public class ColorUtil {
 
     public static Color interpolate(float progress, Color startColor, Color endColor) {
         progress = Math.min(Math.max(progress, 0.0f), 1.0f);
-        return new Color((int)((float)startColor.getRed() + progress * (float)(endColor.getRed() - startColor.getRed())), (int)((float)startColor.getGreen() + progress * (float)(endColor.getGreen() - startColor.getGreen())), (int)((float)startColor.getBlue() + progress * (float)(endColor.getBlue() - startColor.getBlue())));
+        return new Color((int) ((float) startColor.getRed() + progress * (float) (endColor.getRed() - startColor.getRed())), (int) ((float) startColor.getGreen() + progress * (float) (endColor.getGreen() - startColor.getGreen())), (int) ((float) startColor.getBlue() + progress * (float) (endColor.getBlue() - startColor.getBlue())));
     }
 
     public static Color getHealthBlend(float percent) {
@@ -41,7 +38,6 @@ public class ColorUtil {
     }
 
     public static Color scale(Color color, float scaleFactor, int alpha) {
-        return new Color(Math.min(Math.max((int)((float)color.getRed() * scaleFactor), 0), 255), Math.min(Math.max((int)((float)color.getGreen() * scaleFactor), 0), 255), Math.min(Math.max((int)((float)color.getBlue() * scaleFactor), 0), 255), alpha);
+        return new Color(Math.min(Math.max((int) ((float) color.getRed() * scaleFactor), 0), 255), Math.min(Math.max((int) ((float) color.getGreen() * scaleFactor), 0), 255), Math.min(Math.max((int) ((float) color.getBlue() * scaleFactor), 0), 255), alpha);
     }
 }
-

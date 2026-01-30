@@ -1,13 +1,9 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package myau.events;
 
 import myau.event.events.Event;
 import myau.event.types.EventType;
 
-public class UpdateEvent
-implements Event {
+public class UpdateEvent implements Event {
     private final EventType type;
     private final float yaw;
     private final float pitch;
@@ -76,4 +72,3 @@ implements Event {
         }
     }
 }
-

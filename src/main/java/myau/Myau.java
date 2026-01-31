@@ -4,6 +4,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.ksyz.accountmanager.AccountManager;
 import myau.command.CommandManager;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import myau.command.commands.*;
 import myau.config.Config;
 import myau.event.EventManager;
@@ -26,6 +28,7 @@ public class Myau {
     public static RotationManager rotationManager;
     public static FloatManager floatManager;
     public static BlinkManager blinkManager;
+    private static final ScheduledExecutorService ex = Executors.newScheduledThreadPool(4);
     public static DelayManager delayManager;
     public static LagManager lagManager;
     public static PlayerStateManager playerStateManager;
@@ -34,6 +37,10 @@ public class Myau {
     public static PropertyManager propertyManager;
     public static ModuleManager moduleManager;
     public static CommandManager commandManager;
+
+    public static ScheduledExecutorService getExecutor() {
+        return ex;
+    }
 
     public Myau() {
         this.init();
@@ -60,6 +67,7 @@ public class Myau {
         EventManager.register(commandManager);
         moduleManager.modules.put(AimAssist.class, new AimAssist());
         moduleManager.modules.put(AntiAFK.class, new AntiAFK());
+        moduleManager.modules.put(Animations.class, new Animations());
         moduleManager.modules.put(AntiDebuff.class, new AntiDebuff());
         moduleManager.modules.put(AntiFireball.class, new AntiFireball());
         moduleManager.modules.put(AntiObbyTrap.class, new AntiObbyTrap());

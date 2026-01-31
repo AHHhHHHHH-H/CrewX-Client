@@ -22,12 +22,13 @@ import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.util.BlockPos;
 
 public class NoSlow extends Module {
+    // Variaveis
     private static final Minecraft mc = Minecraft.getMinecraft();
     private int lastSlot = -1;
     public final ModeProperty swordMode = new ModeProperty("sword-mode", 1, new String[]{"NONE", "VANILLA"});
     public final PercentProperty swordMotion = new PercentProperty("sword-motion", 100, () -> this.swordMode.getValue() != 0);
     public final BooleanProperty swordSprint = new BooleanProperty("sword-sprint", true, () -> this.swordMode.getValue() != 0);
-    public final ModeProperty foodMode = new ModeProperty("food-mode", 0, new String[]{"NONE", "VANILLA", "FLOAT"});
+    public final ModeProperty foodMode = new ModeProperty("food-mode", 0, new String[]{"NONE", "VANILLA", "FLOAT", "MUSHMC"});
     public final PercentProperty foodMotion = new PercentProperty("food-motion", 100, () -> this.foodMode.getValue() != 0);
     public final BooleanProperty foodSprint = new BooleanProperty("food-sprint", true, () -> this.foodMode.getValue() != 0);
     public final ModeProperty bowMode = new ModeProperty("bow-mode", 0, new String[]{"NONE", "VANILLA", "FLOAT"});
@@ -89,6 +90,21 @@ public class NoSlow extends Module {
 
     @EventTarget(Priority.LOW)
     public void onPlayerUpdate(PlayerUpdateEvent event) {
+        if (this.isEnabled() && this.isAnyActive()) {
+            Myau.moduleManager.getModule(Sprint.class).setEnabled(false);
+            switch (foodMode.getValue()){
+                case 3:
+                    if(mc.thePlayer.isSprinting()){
+                        mc.thePlayer.setSprinting(false);
+                    }else{
+                        mc.thePlayer.setSprinting(true);
+                    }
+                    break;
+            }
+        } else{
+            Myau.moduleManager.getModule(Sprint.class).setEnabled(true);
+        }
+
         if (this.isEnabled() && this.isFloatMode()) {
             int item = mc.thePlayer.inventory.currentItem;
             if (this.lastSlot != item && PlayerUtil.isUsingItem()) {

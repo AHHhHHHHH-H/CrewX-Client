@@ -1,6 +1,7 @@
 package myau.mixin;
 
 import myau.Myau;
+import myau.data.Box;
 import myau.event.EventManager;
 import myau.events.PickEvent;
 import myau.events.RaytraceEvent;
@@ -31,11 +32,11 @@ import java.util.List;
 @Mixin(value = {EntityRenderer.class}, priority = 9999)
 public abstract class MixinEntityRenderer {
     @Unique
-    private Integer slotValue = null;
+    private Box<Integer> slot = null;
     @Unique
-    private ItemStack usingValue = null;
+    private Box<ItemStack> using = null;
     @Unique
-    private Integer useCountValue = null;
+    private Box<Integer> useCount = null;
     @Shadow
     private Minecraft mc;
     @Shadow
@@ -51,15 +52,15 @@ public abstract class MixinEntityRenderer {
             if (scaffold.isEnabled() && scaffold.itemSpoof.getValue()) {
                 int slot = scaffold.getSlot();
                 if (slot >= 0) {
-                    this.slotValue = this.mc.thePlayer.inventory.currentItem;
+                    this.slot = new Box<>(this.mc.thePlayer.inventory.currentItem);
                     this.mc.thePlayer.inventory.currentItem = slot;
                 }
             }
             KillAura killAura = (KillAura) Myau.moduleManager.modules.get(KillAura.class);
             if (killAura.isEnabled() && killAura.isBlocking()) {
-                this.usingValue = ((IAccessorEntityPlayer) this.mc.thePlayer).getItemInUse();
+                this.using = new Box<>(((IAccessorEntityPlayer) this.mc.thePlayer).getItemInUse());
                 ((IAccessorEntityPlayer) this.mc.thePlayer).setItemInUse(this.mc.thePlayer.inventory.getCurrentItem());
-                this.useCountValue = ((IAccessorEntityPlayer) this.mc.thePlayer).getItemInUseCount();
+                this.useCount = new Box<>(((IAccessorEntityPlayer) this.mc.thePlayer).getItemInUseCount());
                 ((IAccessorEntityPlayer) this.mc.thePlayer).setItemInUseCount(69000);
             }
         }
@@ -70,17 +71,17 @@ public abstract class MixinEntityRenderer {
             at = {@At("RETURN")}
     )
     private void postUpdateCameraAndRender(float float1, long long2, CallbackInfo callbackInfo) {
-        if (this.slotValue != null) {
-            this.mc.thePlayer.inventory.currentItem = this.slotValue;
-            this.slotValue = null;
+        if (this.slot != null) {
+            this.mc.thePlayer.inventory.currentItem = this.slot.value;
+            this.slot = null;
         }
-        if (this.usingValue != null) {
-            ((IAccessorEntityPlayer) this.mc.thePlayer).setItemInUse(this.usingValue);
-            this.usingValue = null;
+        if (this.using != null) {
+            ((IAccessorEntityPlayer) this.mc.thePlayer).setItemInUse(this.using.value);
+            this.using = null;
         }
-        if (this.useCountValue != null) {
-            ((IAccessorEntityPlayer) this.mc.thePlayer).setItemInUseCount(this.useCountValue);
-            this.useCountValue = null;
+        if (this.useCount != null) {
+            ((IAccessorEntityPlayer) this.mc.thePlayer).setItemInUseCount(this.useCount.value);
+            this.useCount = null;
         }
     }
 
@@ -93,7 +94,7 @@ public abstract class MixinEntityRenderer {
         if (scaffold.isEnabled() && scaffold.itemSpoof.getValue()) {
             int slot = scaffold.getSlot();
             if (slot >= 0) {
-                this.slotValue = this.mc.thePlayer.inventory.currentItem;
+                this.slot = new Box<>(this.mc.thePlayer.inventory.currentItem);
                 this.mc.thePlayer.inventory.currentItem = slot;
             }
         }
@@ -102,7 +103,7 @@ public abstract class MixinEntityRenderer {
         if (autoBlockIn.isEnabled() && autoBlockIn.itemSpoof.getValue()) {
             int slot = autoBlockIn.getSlot();
             if (slot >= 0) {
-                this.slotValue = this.mc.thePlayer.inventory.currentItem;
+                this.slot = new Box<>(this.mc.thePlayer.inventory.currentItem);
                 this.mc.thePlayer.inventory.currentItem = slot;
             }
         }
@@ -113,9 +114,9 @@ public abstract class MixinEntityRenderer {
             at = {@At("RETURN")}
     )
     private void postUpdateRenderer(CallbackInfo callbackInfo) {
-        if (this.slotValue != null) {
-            this.mc.thePlayer.inventory.currentItem = this.slotValue;
-            this.slotValue = null;
+        if (this.slot != null) {
+            this.mc.thePlayer.inventory.currentItem = this.slot.value;
+            this.slot = null;
         }
     }
 

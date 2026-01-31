@@ -62,12 +62,6 @@ public class Scaffold extends Module {
     private boolean shouldKeepY = false;
     private boolean towering = false;
     private EnumFacing targetFacing = null;
-    
-    // Otimização: Sistema de cache pra porra do BlockData
-    private BlockData cachedBlockData = null;
-    private int cacheTimer = 0;
-    private static final int CACHE_DURATION = 2;
-
     public final ModeProperty rotationMode = new ModeProperty("rotations", 2, new String[]{"NONE", "DEFAULT", "BACKWARDS", "SIDEWAYS"});
     public final ModeProperty moveFix = new ModeProperty("move-fix", 1, new String[]{"NONE", "SILENT"});
     public final ModeProperty sprintMode = new ModeProperty("sprint", 0, new String[]{"NONE", "VANILLA"});
@@ -122,12 +116,6 @@ public class Scaffold extends Module {
     }
 
     private BlockData getBlockData() {
-        // Otimização: Retornar cache se ainda for válido
-        if (this.cacheTimer > 0 && this.cachedBlockData != null) {
-            --this.cacheTimer;
-            return this.cachedBlockData;
-        }
-
         int startY = MathHelper.floor_double(mc.thePlayer.posY);
         BlockPos targetPos = new BlockPos(
                 MathHelper.floor_double(mc.thePlayer.posX),
@@ -135,15 +123,12 @@ public class Scaffold extends Module {
                 MathHelper.floor_double(mc.thePlayer.posZ)
         );
         if (!BlockUtil.isReplaceable(targetPos)) {
-            this.cachedBlockData = null;
-            this.cacheTimer = 0;
             return null;
         } else {
             ArrayList<BlockPos> positions = new ArrayList<>();
-            // Otimização: Redução do raio de busca de 4 para 2 (como no Scaffold.java)
-            for (int x = -2; x <= 2; x++) {
-                for (int y = -3; y <= 0; y++) {
-                    for (int z = -2; z <= 2; z++) {
+            for (int x = -4; x <= 4; x++) {
+                for (int y = -4; y <= 0; y++) {
+                    for (int z = -4; z <= 4; z++) {
                         BlockPos pos = targetPos.add(x, y, z);
                         if (!BlockUtil.isReplaceable(pos)
                                 && !BlockUtil.isInteractable(pos)
@@ -152,13 +137,12 @@ public class Scaffold extends Module {
                                         > (double) mc.playerController.getBlockReachDistance()
                         )
                                 && (this.stage == 0 || this.shouldKeepY || pos.getY() < this.startY)) {
-                            // Otimização: Uso de array fixo para facings relevantes
-                            EnumFacing[] relevantFacings = new EnumFacing[]{EnumFacing.UP, EnumFacing.NORTH, EnumFacing.SOUTH, EnumFacing.EAST, EnumFacing.WEST};
-                            for (EnumFacing facing : relevantFacings) {
-                                BlockPos blockPos = pos.offset(facing);
-                                if (BlockUtil.isReplaceable(blockPos)) {
-                                    positions.add(pos);
-                                    break; // Otimização: Encontrou um facing válido, pula para o próximo bloco
+                            for (EnumFacing facing : EnumFacing.VALUES) {
+                                if (facing != EnumFacing.DOWN) {
+                                    BlockPos blockPos = pos.offset(facing);
+                                    if (BlockUtil.isReplaceable(blockPos)) {
+                                        positions.add(pos);
+                                    }
                                 }
                             }
                         }
@@ -166,8 +150,6 @@ public class Scaffold extends Module {
                 }
             }
             if (positions.isEmpty()) {
-                this.cachedBlockData = null;
-                this.cacheTimer = 0;
                 return null;
             } else {
                 positions.sort(
@@ -177,17 +159,7 @@ public class Scaffold extends Module {
                 );
                 BlockPos blockPos = positions.get(0);
                 EnumFacing facing = this.getBestFacing(blockPos, targetPos);
-                
-                if (facing == null) {
-                    this.cachedBlockData = null;
-                    this.cacheTimer = 0;
-                    return null;
-                }
-                
-                // Otimização: Salvar no cache
-                this.cachedBlockData = new BlockData(blockPos, facing);
-                this.cacheTimer = CACHE_DURATION;
-                return this.cachedBlockData;
+                return facing == null ? null : new BlockData(blockPos, facing);
             }
         }
     }
@@ -203,9 +175,6 @@ public class Scaffold extends Module {
                 } else {
                     PacketUtil.sendPacket(new C0APacketAnimation());
                 }
-                // Otimização: Resetar cache após colocar bloco
-                this.cachedBlockData = null;
-                this.cacheTimer = 0;
             }
         }
     }
@@ -280,139 +249,255 @@ public class Scaffold extends Module {
     @EventTarget(Priority.HIGH)
     public void onUpdate(UpdateEvent event) {
         if (this.isEnabled() && event.getType() == EventType.PRE) {
-            if (this.blockCount == -1) {
-                this.blockCount = 0;
-                for (int i = 0; i < 9; i++) {
-                    ItemStack stack = mc.thePlayer.inventory.getStackInSlot(i);
-                    if (stack != null && stack.stackSize > 0) {
-                        Item item = stack.getItem();
-                        if (item instanceof ItemBlock) {
-                            Block block = ((ItemBlock) item).getBlock();
-                            if (!BlockUtil.isInteractable(block) && BlockUtil.isSolid(block)) {
-                                this.blockCount += stack.stackSize;
-                            }
+            if (this.rotationTick > 0) {
+                this.rotationTick--;
+            }
+            if (mc.thePlayer.onGround) {
+                if (this.stage > 0) {
+                    this.stage--;
+                }
+                if (this.stage < 0) {
+                    this.stage++;
+                }
+                if (this.stage == 0
+                        && this.keepY.getValue() != 0
+                        && (!(Boolean) this.keepYonPress.getValue() || PlayerUtil.isUsingItem())
+                        && (!this.disableWhileJumpActive.getValue() || !mc.thePlayer.isPotionActive(Potion.jump))
+                        && !mc.gameSettings.keyBindJump.isKeyDown()) {
+                    this.stage = 1;
+                }
+                this.startY = this.shouldKeepY ? this.startY : MathHelper.floor_double(mc.thePlayer.posY);
+                this.shouldKeepY = false;
+                this.towering = false;
+            }
+            if (this.canPlace()) {
+                ItemStack stack = mc.thePlayer.getHeldItem();
+                int count = ItemUtil.isBlock(stack) ? stack.stackSize : 0;
+                this.blockCount = Math.min(this.blockCount, count);
+                if (this.blockCount <= 0) {
+                    int slot = mc.thePlayer.inventory.currentItem;
+                    if (this.blockCount == 0) {
+                        slot--;
+                    }
+                    for (int i = slot; i > slot - 9; i--) {
+                        int hotbarSlot = (i % 9 + 9) % 9;
+                        ItemStack candidate = mc.thePlayer.inventory.getStackInSlot(hotbarSlot);
+                        if (ItemUtil.isBlock(candidate)) {
+                            mc.thePlayer.inventory.currentItem = hotbarSlot;
+                            this.blockCount = candidate.stackSize;
+                            break;
                         }
                     }
                 }
-            }
-
-            if (this.itemSpoof.getValue()) {
-                int slot = ItemUtil.getBlockSlot();
-                if (slot != -1) {
-                    this.lastSlot = slot;
-                }
-            } else {
-                int slot = ItemUtil.getBlockSlot();
-                if (slot != -1) {
-                    mc.thePlayer.inventory.currentItem = slot;
-                    this.lastSlot = slot;
-                }
-            }
-
-            if (this.canPlace()) {
-                BlockData blockData = this.getBlockData();
-                if (blockData != null) {
-                    float[] rotations = RotationUtil.getRotations(blockData.blockPos, blockData.facing);
-                    float yaw = rotations[0];
-                    float pitch = rotations[1];
+                float currentYaw = this.getCurrentYaw();
+                float yawDiffTo180 = RotationUtil.wrapAngleDiff(currentYaw - 180.0F, event.getYaw());
+                float diagonalYaw = this.isDiagonal(currentYaw)
+                        ? yawDiffTo180
+                        : RotationUtil.wrapAngleDiff(currentYaw - 135.0F * ((currentYaw + 180.0F) % 90.0F < 45.0F ? 1.0F : -1.0F), event.getYaw());
+                if (!this.canRotate) {
                     switch (this.rotationMode.getValue()) {
                         case 1:
-                            this.yaw = yaw;
-                            this.pitch = pitch;
-                            this.canRotate = true;
+                            if (this.yaw == -180.0F && this.pitch == 0.0F) {
+                                this.yaw = RotationUtil.quantizeAngle(diagonalYaw);
+                                this.pitch = RotationUtil.quantizeAngle(85.0F);
+                            } else {
+                                this.yaw = RotationUtil.quantizeAngle(diagonalYaw);
+                            }
                             break;
                         case 2:
-                            this.yaw = this.getCurrentYaw() - 180.0F;
-                            this.pitch = pitch;
-                            this.canRotate = true;
+                            if (this.yaw == -180.0F && this.pitch == 0.0F) {
+                                this.yaw = RotationUtil.quantizeAngle(yawDiffTo180);
+                                this.pitch = RotationUtil.quantizeAngle(85.0F);
+                            } else {
+                                this.yaw = RotationUtil.quantizeAngle(yawDiffTo180);
+                            }
                             break;
                         case 3:
-                            float currentYaw = this.getCurrentYaw();
-                            this.yaw = currentYaw + (float) (this.isDiagonal(currentYaw) ? (MoveUtil.getLeftValue() > 0.0 ? -135 : 135) : (MoveUtil.getLeftValue() > 0.0 ? -90 : 90));
-                            this.pitch = pitch;
-                            this.canRotate = true;
+                            if (this.yaw == -180.0F && this.pitch == 0.0F) {
+                                this.yaw = RotationUtil.quantizeAngle(diagonalYaw);
+                                this.pitch = RotationUtil.quantizeAngle(85.0F);
+                            } else {
+                                this.yaw = RotationUtil.quantizeAngle(diagonalYaw);
+                            }
+                    }
+                }
+                BlockData blockData = this.getBlockData();
+                Vec3 hitVec = null;
+                if (blockData != null) {
+                    double[] x = placeOffsets;
+                    double[] y = placeOffsets;
+                    double[] z = placeOffsets;
+                    switch (blockData.facing()) {
+                        case NORTH:
+                            z = new double[]{0.0};
                             break;
+                        case EAST:
+                            x = new double[]{1.0};
+                            break;
+                        case SOUTH:
+                            z = new double[]{1.0};
+                            break;
+                        case WEST:
+                            x = new double[]{0.0};
+                            break;
+                        case DOWN:
+                            y = new double[]{0.0};
+                            break;
+                        case UP:
+                            y = new double[]{1.0};
+                    }
+                    float bestYaw = -180.0F;
+                    float bestPitch = 0.0F;
+                    float bestDiff = 0.0F;
+                    for (double dx : x) {
+                        for (double dy : y) {
+                            for (double dz : z) {
+                                double relX = (double) blockData.blockPos().getX() + dx - mc.thePlayer.posX;
+                                double relY = (double) blockData.blockPos().getY() + dy - mc.thePlayer.posY - (double) mc.thePlayer.getEyeHeight();
+                                double relZ = (double) blockData.blockPos().getZ() + dz - mc.thePlayer.posZ;
+                                float baseYaw = RotationUtil.wrapAngleDiff(this.yaw, event.getYaw());
+                                float[] rotations = RotationUtil.getRotationsTo(relX, relY, relZ, baseYaw, this.pitch);
+                                MovingObjectPosition mop = RotationUtil.rayTrace(rotations[0], rotations[1], mc.playerController.getBlockReachDistance(), 1.0F);
+                                if (mop != null
+                                        && mop.typeOfHit == MovingObjectType.BLOCK
+                                        && mop.getBlockPos().equals(blockData.blockPos())
+                                        && mop.sideHit == blockData.facing()) {
+                                    float totalDiff = Math.abs(rotations[0] - baseYaw) + Math.abs(rotations[1] - this.pitch);
+                                    if (bestYaw == -180.0F && bestPitch == 0.0F || totalDiff < bestDiff) {
+                                        bestYaw = rotations[0];
+                                        bestPitch = rotations[1];
+                                        bestDiff = totalDiff;
+                                        hitVec = mop.hitVec;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (bestYaw != -180.0F || bestPitch != 0.0F) {
+                        this.yaw = bestYaw;
+                        this.pitch = bestPitch;
+                        this.canRotate = true;
                     }
                 }
-
-                if (this.canRotate) {
-                    RotationState.setRotation(this.yaw, this.pitch, 3.0F);
-                    if (this.rotationTick > 0) {
-                        this.rotationTick--;
+                if (this.canRotate && MoveUtil.isForwardPressed() && Math.abs(MathHelper.wrapAngleTo180_float(yawDiffTo180 - this.yaw)) < 90.0F) {
+                    switch (this.rotationMode.getValue()) {
+                        case 2:
+                            this.yaw = RotationUtil.quantizeAngle(yawDiffTo180);
+                            break;
+                        case 3:
+                            this.yaw = RotationUtil.quantizeAngle(diagonalYaw);
                     }
                 }
-
-                if (this.rotationTick <= 0) {
-                    MovingObjectPosition movingObjectPosition = mc.objectMouseOver;
-                    if (movingObjectPosition != null && movingObjectPosition.typeOfHit == MovingObjectType.BLOCK) {
-                        BlockPos blockPos = movingObjectPosition.getBlockPos();
-                        EnumFacing enumFacing = movingObjectPosition.sideHit;
-                        if (BlockUtil.isInteractable(mc.theWorld.getBlockState(blockPos).getBlock()) || !BlockUtil.isReplaceable(blockPos.offset(enumFacing))) {
-                            this.place(blockPos, enumFacing, movingObjectPosition.hitVec);
-                            if (this.multiplace.getValue()) {
-                                this.place(blockPos, enumFacing, movingObjectPosition.hitVec);
+                if (this.rotationMode.getValue() != 0) {
+                    float targetYaw = this.yaw;
+                    float targetPitch = this.pitch;
+                    if (this.towering && (mc.thePlayer.motionY > 0.0 || mc.thePlayer.posY > (double) (this.startY + 1))) {
+                        float yawDiff = MathHelper.wrapAngleTo180_float(this.yaw - event.getYaw());
+                        float tolerance = this.rotationTick >= 2 ? RandomUtil.nextFloat(90.0F, 95.0F) : RandomUtil.nextFloat(30.0F, 35.0F);
+                        if (Math.abs(yawDiff) > tolerance) {
+                            float clampedYaw = RotationUtil.clampAngle(yawDiff, tolerance);
+                            targetYaw = RotationUtil.quantizeAngle(event.getYaw() + clampedYaw);
+                            this.rotationTick = Math.max(this.rotationTick, 1);
+                        }
+                    }
+                    if (this.isTowering()) {
+                        float yawDelta = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw - event.getYaw());
+                        targetYaw = RotationUtil.quantizeAngle(event.getYaw() + yawDelta * RandomUtil.nextFloat(0.98F, 0.99F));
+                        targetPitch = RotationUtil.quantizeAngle(RandomUtil.nextFloat(30.0F, 80.0F));
+                        this.rotationTick = 3;
+                        this.towering = true;
+                    }
+                    event.setRotation(targetYaw, targetPitch, 3);
+                    if (this.moveFix.getValue() == 1) {
+                        event.setPervRotation(targetYaw, 3);
+                    }
+                }
+                if (blockData != null && hitVec != null && this.rotationTick <= 0) {
+                    this.place(blockData.blockPos(), blockData.facing(), hitVec);
+                    if (this.multiplace.getValue()) {
+                        for (int i = 0; i < 3; i++) {
+                            blockData = this.getBlockData();
+                            if (blockData == null) {
+                                break;
+                            }
+                            MovingObjectPosition mop = RotationUtil.rayTrace(this.yaw, this.pitch, mc.playerController.getBlockReachDistance(), 1.0F);
+                            if (mop != null
+                                    && mop.typeOfHit == MovingObjectType.BLOCK
+                                    && mop.getBlockPos().equals(blockData.blockPos())
+                                    && mop.sideHit == blockData.facing()) {
+                                this.place(blockData.blockPos(), blockData.facing(), mop.hitVec);
+                            } else {
+                                hitVec = BlockUtil.getClickVec(blockData.blockPos(), blockData.facing());
+                                double dx = hitVec.xCoord - mc.thePlayer.posX;
+                                double dy = hitVec.yCoord - mc.thePlayer.posY - (double) mc.thePlayer.getEyeHeight();
+                                double dz = hitVec.zCoord - mc.thePlayer.posZ;
+                                float[] rotations = RotationUtil.getRotationsTo(dx, dy, dz, event.getYaw(), event.getPitch());
+                                if (!(Math.abs(rotations[0] - this.yaw) < 120.0F) || !(Math.abs(rotations[1] - this.pitch) < 60.0F)) {
+                                    break;
+                                }
+                                mop = RotationUtil.rayTrace(rotations[0], rotations[1], mc.playerController.getBlockReachDistance(), 1.0F);
+                                if (mop == null
+                                        || mop.typeOfHit != MovingObjectType.BLOCK
+                                        || !mop.getBlockPos().equals(blockData.blockPos())
+                                        || mop.sideHit != blockData.facing()) {
+                                    break;
+                                }
+                                this.place(blockData.blockPos(), blockData.facing(), mop.hitVec);
                             }
                         }
                     }
                 }
-            }
-
-            int yState = this.keepY.getValue();
-            if (yState != 0) {
-                if (this.keepYonPress.getValue() && !mc.gameSettings.keyBindJump.isKeyDown()) {
-                    this.shouldKeepY = false;
-                    this.stage = 0;
-                } else if (this.disableWhileJumpActive.getValue() && mc.thePlayer.isPotionActive(Potion.jump)) {
-                    this.shouldKeepY = false;
-                    this.stage = 0;
-                } else {
-                    switch (yState) {
-                        case 1:
-                        case 2:
-                            if (mc.thePlayer.onGround && MoveUtil.isForwardPressed() && !PlayerUtil.isAirAbove()) {
-                                if (this.stage == 0) {
-                                    this.startY = MathHelper.floor_double(mc.thePlayer.posY);
-                                }
-                                this.shouldKeepY = true;
-                                this.stage = 1;
-                            }
-                            if (this.stage > 0 && !MoveUtil.isForwardPressed()) {
-                                this.shouldKeepY = false;
-                                this.stage = 0;
-                            }
-                            break;
-                        case 3:
-                            if (mc.thePlayer.onGround && MoveUtil.isForwardPressed() && !PlayerUtil.isAirAbove()) {
-                                if (this.stage == 0) {
-                                    this.startY = MathHelper.floor_double(mc.thePlayer.posY);
-                                }
-                                this.shouldKeepY = true;
-                                this.stage = 1;
-                            }
-                            break;
+                if (this.targetFacing != null) {
+                    if (this.rotationTick <= 0) {
+                        int playerBlockX = MathHelper.floor_double(mc.thePlayer.posX);
+                        int playerBlockY = MathHelper.floor_double(mc.thePlayer.posY);
+                        int playerBlockZ = MathHelper.floor_double(mc.thePlayer.posZ);
+                        BlockPos belowPlayer = new BlockPos(playerBlockX, playerBlockY - 1, playerBlockZ);
+                        hitVec = BlockUtil.getHitVec(belowPlayer, this.targetFacing, this.yaw, this.pitch);
+                        this.place(belowPlayer, this.targetFacing, hitVec);
+                    }
+                    this.targetFacing = null;
+                } else if (this.keepY.getValue() == 2 && this.stage > 0 && !mc.thePlayer.onGround) {
+                    int nextBlockY = MathHelper.floor_double(mc.thePlayer.posY + mc.thePlayer.motionY);
+                    if (nextBlockY <= this.startY && mc.thePlayer.posY > (double) (this.startY + 1)) {
+                        this.shouldKeepY = true;
+                        blockData = this.getBlockData();
+                        if (blockData != null && this.rotationTick <= 0) {
+                            hitVec = BlockUtil.getHitVec(blockData.blockPos(), blockData.facing(), this.yaw, this.pitch);
+                            this.place(blockData.blockPos(), blockData.facing(), hitVec);
+                        }
                     }
                 }
-            } else {
-                this.shouldKeepY = false;
-                this.stage = 0;
             }
+        }
+    }
 
-            int towerState = this.tower.getValue();
-            if (towerState != 0 && mc.gameSettings.keyBindJump.isKeyDown()) {
-                this.towering = true;
-                switch (towerState) {
+    @EventTarget
+    public void onStrafe(StrafeEvent event) {
+        if (this.isEnabled()) {
+            if (!mc.thePlayer.isCollidedHorizontally
+                    && mc.thePlayer.hurtTime <= 5
+                    && !mc.thePlayer.isPotionActive(Potion.jump)
+                    && mc.gameSettings.keyBindJump.isKeyDown()
+                    && ItemUtil.isHoldingBlock()) {
+                int yState = (int) (mc.thePlayer.posY % 1.0 * 100.0);
+                switch (this.tower.getValue()) {
                     case 1:
                         switch (this.towerTick) {
                             case 0:
                                 if (mc.thePlayer.onGround) {
                                     this.towerTick = 1;
-                                    mc.thePlayer.motionY = 0.42F;
+                                    mc.thePlayer.motionY = -0.0784000015258789;
                                 }
                                 return;
                             case 1:
                                 if (yState == 0 && PlayerUtil.isAirBelow()) {
                                     this.startY = MathHelper.floor_double(mc.thePlayer.posY);
-                                    if (!MoveUtil.isForwardPressed()) {
+                                    this.towerTick = 2;
+                                    mc.thePlayer.motionY = 0.42F;
+                                    if (MoveUtil.isForwardPressed()) {
+                                        MoveUtil.setSpeed(MoveUtil.getSpeed(), MoveUtil.getMoveYaw());
+                                    } else {
                                         MoveUtil.setSpeed(0.0);
                                         event.setForward(0.0F);
                                         event.setStrafe(0.0F);
@@ -653,8 +738,6 @@ public class Scaffold extends Module {
         this.towerTick = 0;
         this.towerDelay = 0;
         this.towering = false;
-        this.cachedBlockData = null;
-        this.cacheTimer = 0;
     }
 
     @Override
@@ -662,8 +745,6 @@ public class Scaffold extends Module {
         if (mc.thePlayer != null && this.lastSlot != -1) {
             mc.thePlayer.inventory.currentItem = this.lastSlot;
         }
-        this.cachedBlockData = null;
-        this.cacheTimer = 0;
     }
 
     public static class BlockData {

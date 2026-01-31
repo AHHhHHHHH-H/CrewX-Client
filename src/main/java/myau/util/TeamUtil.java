@@ -11,8 +11,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.scoreboard.ScorePlayerTeam;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TeamUtil {
     private static final Minecraft mc = Minecraft.getMinecraft();
@@ -23,7 +23,17 @@ public class TeamUtil {
     }
 
     public static List<Entity> getLoadedEntitiesSorted() {
-        return new ArrayList<>(TeamUtil.mc.theWorld.loadedEntityList);
+        return TeamUtil.mc.theWorld.loadedEntityList.stream().sorted((entity1, entity2) -> {
+            double dist1 = mc.getRenderManager().getDistanceToCamera(entity1.posX, entity1.posY, entity1.posZ);
+            double dist2 = mc.getRenderManager().getDistanceToCamera(entity2.posX, entity2.posY, entity2.posZ);
+            if (dist1 < dist2) {
+                return 1;
+            }
+            if (dist1 > dist2) {
+                return -1;
+            }
+            return entity1.getUniqueID().toString().compareTo(entity2.getUniqueID().toString());
+        }).collect(Collectors.toList());
     }
 
     public static float getHealthScore(EntityLivingBase entityLivingBase) {

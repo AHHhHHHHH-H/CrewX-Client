@@ -68,6 +68,7 @@ public class Myau {
         moduleManager.modules.put(AimAssist.class, new AimAssist());
         moduleManager.modules.put(AntiAFK.class, new AntiAFK());
         moduleManager.modules.put(Animations.class, new Animations());
+        moduleManager.modules.put(Backtrack.class, new Backtrack());
         moduleManager.modules.put(AntiDebuff.class, new AntiDebuff());
         moduleManager.modules.put(AntiFireball.class, new AntiFireball());
         moduleManager.modules.put(AntiObbyTrap.class, new AntiObbyTrap());

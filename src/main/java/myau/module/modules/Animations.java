@@ -66,6 +66,7 @@ public class Animations extends Module {
     @EventTarget
     public void onRenderItem(@NotNull RenderItemEvent event) {
         if (!this.isEnabled()) return;
+        System.out.println("Renderizando!");
 
         try {
             if (event.getItemToRender().getItem() instanceof ItemMap) {
@@ -169,8 +170,8 @@ public class Animations extends Module {
                             case 10: // Komorebi
                                 this.translate(0.41F, -0.25F, -0.5555557F);
                                 GlStateManager.rotate(35.0F, 0f, 1.5F, 0.0F);
-                                final float racism = MathHelper.sin(swingProgress * swingProgress / 64 * (float) Math.PI);
-                                GlStateManager.rotate(racism * -5.0F, 0.0F, 0.0F, 0.0F);
+                                final float A = MathHelper.sin(swingProgress * swingProgress / 64 * (float) Math.PI);
+                                GlStateManager.rotate(A * -5.0F, 0.0F, 0.0F, 0.0F);
                                 GlStateManager.rotate(convertedProgress * -12.0F, 0.0F, 0.0F, 1.0F);
                                 GlStateManager.rotate(convertedProgress * -65.0F, 1.0F, 0.0F, 0.0F);
                                 AnimationsUtil.blockTransformation();

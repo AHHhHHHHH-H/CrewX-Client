@@ -49,8 +49,10 @@ public abstract class Module {
         if (this.enabled != enabled) {
             this.enabled = enabled;
             if (enabled) {
+                myau.event.EventManager.register(this);
                 this.onEnabled();
             } else {
+                myau.event.EventManager.unregister(this);
                 this.onDisabled();
             }
         }
